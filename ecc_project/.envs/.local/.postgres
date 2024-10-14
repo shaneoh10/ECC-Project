@@ -1,0 +1,7 @@
+# PostgreSQL
+# ------------------------------------------------------------------------------
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=ecc_project
+POSTGRES_USER=MJqVvAyWWVYAqSEdevWlSiwLbLIAjkKA
+POSTGRES_PASSWORD=3ZoSNXGdkg5NQZf4VNKh2Qj43iPOlUqfj2tJfHTbId4rM3YkU2ejU2Ata60bNF0U
