@@ -11,7 +11,7 @@ env:
   CONTAINER_NAME_POSTGRES: postgres
   ECS_SERVICE: ecc_project_service
   ECS_TD: .github/workflows/task_definition.json
-  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-2.amazonaws.com
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com
   ECR_REPOSITORY_APP: ecc_project_repo_app
   ECR_REPOSITORY_POSTGRES: ecc_project_repo_postgres
   IMAGE_TAG: latest
