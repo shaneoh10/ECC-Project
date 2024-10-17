@@ -7,7 +7,7 @@ on:
 env:
   AWS_REGION: eu-west-1
   ECS_CLUSTER: ecc_project_cluster
-  CONTAINER_NAME_APP: django
+  CONTAINER_NAME_APP: app
   CONTAINER_NAME_POSTGRES: postgres
   ECS_SERVICE: ecc_project_service
   ECS_TD: .github/workflows/task_definition.json

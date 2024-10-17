@@ -1,9 +1,9 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:eu-west-1:537124959582:task-definition/ecc_project_task_definition",
+    "taskDefinitionArn": "arn:aws:ecs:eu-west-1:537124959582:task-definition/ecc_project_task_definition:2",
     "containerDefinitions": [
         {
             "name": "app",
-            "image": "537124959582.dkr.ecr.us-east-2.amazonaws.com/ecc_project_repo_django:latest",
+            "image": "537124959582.dkr.ecr.us-east-2.amazonaws.com/ecc_project_repo_app:latest",
             "cpu": 256,
             "memory": 512,
             "portMappings": [
@@ -42,7 +42,7 @@
     "taskRoleArn": "arn:aws:iam::537124959582:role/ecsTaskExecutionRole",
     "executionRoleArn": "arn:aws:iam::537124959582:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
-    "revision": 1,
+    "revision": 2,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -72,7 +72,7 @@
     ],
     "cpu": "512",
     "memory": "1024",
-    "registeredAt": "2024-10-17T19:53:36.412Z",
+    "registeredAt": "2024-10-17T20:15:55.001Z",
     "registeredBy": "arn:aws:iam::537124959582:user/shane",
     "tags": []
 }
