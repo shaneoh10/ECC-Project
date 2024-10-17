@@ -1,19 +1,27 @@
 name: Deploy to AWS ECS
+
 on:
   push:
     branches: ['master', 'main']
+
 env:
   AWS_REGION: eu-west-1
   ECS_CLUSTER: ecc_project_cluster
-  CONTAINER_NAME: app
+  CONTAINER_NAME_APP: django
+  CONTAINER_NAME_POSTGRES: postgres
   ECS_SERVICE: ecc_project_service
   ECS_TD: .github/workflows/task_definition.json
+  ECR_REGISTRY: 537124959582.dkr.ecr.us-east-2.amazonaws.com
+  ECR_REPOSITORY_APP: ecc_project_repo_app
+  ECR_REPOSITORY_POSTGRES: ecc_project_repo_postgres
+  IMAGE_TAG: latest
 
 jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
     environment: dev
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -29,29 +37,46 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build and push image to AWS ECR
+      - name: Build and tag images with docker-compose
         id: build-image
-        env:
-          ECR_REGISTRY: "537124959582.dkr.ecr.us-east-2.amazonaws.com"
-          ECR_REPOSITORY: "ecc_project_repo"
-          IMAGE_TAG: latest
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          # Build the images using the docker-compose file
+          docker-compose -f docker-compose.local.yml build
 
-      - name: Add image ID to AWS ECS task definition
-        id: task-def-1
+          # Tag the Django app image
+          docker tag ecc_project_local_django:latest $ECR_REGISTRY/$ECR_REPOSITORY_APP:$IMAGE_TAG
+
+          # Tag the Postgres image
+          docker tag ecc_project_production_postgres:latest $ECR_REGISTRY/$ECR_REPOSITORY_POSTGRES:$IMAGE_TAG
+
+      - name: Push images to AWS ECR
+        run: |
+          # Push the Django app image
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_APP:$IMAGE_TAG
+
+          # Push the Postgres image
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_POSTGRES:$IMAGE_TAG
+
+      - name: Add app image ID to AWS ECS task definition
+        id: task-def-app
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: ${{ env.ECS_TD }}
-          container-name: ${{ env.CONTAINER_NAME }}
-          image: ${{ steps.build-image.outputs.image }}
+          container-name: ${{ env.CONTAINER_NAME_APP }}
+          image: $ECR_REGISTRY/$ECR_REPOSITORY_APP:$IMAGE_TAG
 
-      - name: Deploy AWS ECS task definition
+      - name: Add Postgres image ID to AWS ECS task definition
+        id: task-def-postgres
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ env.ECS_TD }}
+          container-name: ${{ env.CONTAINER_NAME_POSTGRES }}
+          image: $ECR_REGISTRY/$ECR_REPOSITORY_POSTGRES:$IMAGE_TAG
+
+      - name: Deploy ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ steps.task-def-1.outputs.task-definition }}
+          task-definition: ${{ steps.task-def-app.outputs.task-definition }}
           service: ${{ env.ECS_SERVICE }}
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
