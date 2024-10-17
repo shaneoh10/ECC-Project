@@ -1,7 +1,7 @@
 volumes:
   ecc_project_local_postgres_data: {}
   ecc_project_local_postgres_data_backups: {}
-  
+
 
 services:
   django:
