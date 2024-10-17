@@ -1,15 +1,33 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:eu-west-1:537124959582:task-definition/app",
+    "taskDefinitionArn": "arn:aws:ecs:eu-west-1:537124959582:task-definition/ecc_project_task_definition",
     "containerDefinitions": [
         {
             "name": "app",
-            "image": "537124959582.dkr.ecr.us-east-2.amazonaws.com/app_repo",
+            "image": "537124959582.dkr.ecr.us-east-2.amazonaws.com/ecc_project_repo_django:latest",
             "cpu": 256,
             "memory": 512,
             "portMappings": [
                 {
-                    "containerPort": 80,
-                    "hostPort": 80,
+                    "containerPort": 8000,
+                    "hostPort": 8000,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "environment": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "systemControls": []
+        },
+        {
+            "name": "postgres",
+            "image": "537124959582.dkr.ecr.us-east-2.amazonaws.com/ecc_project_repo_postgres:latest",
+            "cpu": 256,
+            "memory": 512,
+            "portMappings": [
+                {
+                    "containerPort": 5432,
+                    "hostPort": 5432,
                     "protocol": "tcp"
                 }
             ],
@@ -20,11 +38,11 @@
             "systemControls": []
         }
     ],
-    "family": "app",
+    "family": "ecc_project_task_definition",
     "taskRoleArn": "arn:aws:iam::537124959582:role/ecsTaskExecutionRole",
     "executionRoleArn": "arn:aws:iam::537124959582:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
-    "revision": 2,
+    "revision": 1,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -52,9 +70,9 @@
     "requiresCompatibilities": [
         "FARGATE"
     ],
-    "cpu": "256",
-    "memory": "512",
-    "registeredAt": "2024-10-17T17:30:23.584Z",
+    "cpu": "512",
+    "memory": "1024",
+    "registeredAt": "2024-10-17T19:53:36.412Z",
     "registeredBy": "arn:aws:iam::537124959582:user/shane",
     "tags": []
 }
