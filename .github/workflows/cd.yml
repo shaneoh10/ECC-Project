@@ -55,7 +55,7 @@ jobs:
           image: ${{env.ECR_REGISTRY}}/${{env.ECR_REPOSITORY_APP}}:${{env.IMAGE_TAG}}
 
       - name: Deploy ECS task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.task-def-app.outputs.task-definition }}
           service: ${{ env.ECS_SERVICE }}
