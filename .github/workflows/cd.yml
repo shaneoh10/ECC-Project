@@ -38,7 +38,7 @@ jobs:
       - name: Build and tag Django image using Docker Compose
         id: build-image
         run: |
-          docker-compose -f docker-compose.local.yml build django
+          docker compose -f docker-compose.local.yml build django
           docker tag ecc_project_local_django:latest $ECR_REGISTRY/$ECR_REPOSITORY_APP:$IMAGE_TAG
 
       - name: Push app image to AWS ECR
