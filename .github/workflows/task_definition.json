@@ -45,7 +45,7 @@
     "taskRoleArn": "arn:aws:iam::537124959582:role/ecsTaskExecutionRole",
     "executionRoleArn": "arn:aws:iam::537124959582:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
-    "revision": 26,
+    "revision": 29,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -71,11 +71,11 @@
         "FARGATE"
     ],
     "requiresCompatibilities": [
-        "EC2"
+        "FARGATE"
     ],
     "cpu": "256",
     "memory": "512",
-    "registeredAt": "2024-10-21T14:04:25.741Z",
+    "registeredAt": "2024-10-21T14:36:27.277Z",
     "registeredBy": "arn:aws:iam::537124959582:user/shane",
     "tags": []
 }
