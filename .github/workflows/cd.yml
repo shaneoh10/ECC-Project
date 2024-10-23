@@ -6,11 +6,13 @@ on:
 
 env:
   AWS_REGION: eu-west-1
-  ECS_CLUSTER: ecc_project_cluster
+  ECS_CLUSTER: ecc-project-cluster
   CONTAINER_NAME_APP: django
-  ECS_SERVICE: ecc_project_service
+  CONTAINER_NAME_DB: postgres
+  ECS_SERVICE: ecc-project-service
   ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com
-  ECR_REPOSITORY_APP: ecc_project_django
+  ECR_REPOSITORY_APP: ecc-project-django
+  ECR_REPOSITORY_DB: ecc-project-postgres
   IMAGE_TAG: latest
 
 jobs:
@@ -34,21 +36,30 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build and tag Django image using Docker Compose
-        id: build-image
+      - name: Build and tag django app image
+        id: build-app-image
         run: |
           docker compose -f docker-compose.local.yml build django
           docker tag ecc_project_local_django:latest $ECR_REGISTRY/$ECR_REPOSITORY_APP:$IMAGE_TAG
 
-      - name: Push app image to AWS ECR
+      - name: Push django app image to AWS ECR
         run: |
-          # Push the Django app image
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_APP:$IMAGE_TAG
+
+      - name: Build and tag Postgres image
+        id: build-postgres-image
+        run: |
+          docker compose -f docker-compose.local.yml build postgres
+          docker tag ecc_project_production_postgres:latest $ECR_REGISTRY/$ECR_REPOSITORY_DB:$IMAGE_TAG
+
+      - name: Push Postgres image to AWS ECR
+        run: |
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_DB:$IMAGE_TAG
 
       - name: Download ECS task definition
         run: |
           aws ecs describe-task-definition \
-            --task-definition ecc_project_task_definition \
+            --task-definition ecc-project-task-definition \
             --query 'taskDefinition' > task-definition.json
 
       - name: Fill in the new image ID in the ECS task definition
