@@ -9,7 +9,7 @@ services:
       context: .
       dockerfile: ./compose/local/django/Dockerfile
     image: ecc_project_local_django
-    container_name: ecc_project_local_django
+    container_name: django
     depends_on:
       - postgres
     volumes:
@@ -26,7 +26,7 @@ services:
       context: .
       dockerfile: ./compose/production/postgres/Dockerfile
     image: ecc_project_production_postgres
-    container_name: ecc_project_local_postgres
+    container_name: postgres
     volumes:
       - ecc_project_local_postgres_data:/var/lib/postgresql/data
       - ecc_project_local_postgres_data_backups:/backups
