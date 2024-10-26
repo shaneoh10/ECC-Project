@@ -1,4 +1,12 @@
 terraform {
+    backend "s3" {
+        bucket         = "ecc-project-tf-state-backend"
+        key            = "tf-infra/terraform.tfstate"
+        region         = "eu-west-1"
+        dynamodb_table = "ecc-project-tf-state-locking"
+        encrypt        = true
+    }
+
     required_version = ">= 1.9.7"
     required_providers {
         aws = {
@@ -9,12 +17,12 @@ terraform {
 }
 
 provider "aws" {
-    region = "eu-west-1"
+    region = var.region
 }
 
 module "tf-state" {
     source      = "./modules/tf-state"
-    bucket_name = "ecc-project-tf-state-backend"
+    bucket_name = var.bucket_name
 }
 
 module "ecs" {
