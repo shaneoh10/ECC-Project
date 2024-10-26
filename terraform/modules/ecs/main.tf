@@ -11,12 +11,3 @@ terraform {
 provider "aws" {
     region = "eu-west-1"
 }
-
-module "ecs" {
-  source = "modules/ecs"
-
-  postgres_db = var.postgres_db
-  postgres_host = var.postgres_host
-  postgres_user = var.postgres_user
-  postgres_password = var.postgres_password
-}
