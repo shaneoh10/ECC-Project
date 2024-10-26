@@ -6,7 +6,7 @@ resource "aws_vpc" "vpc" {
   enable_dns_support   = true
 
   tags = {
-    Name = "${locals.project_name}-vpc"
+    Name = "${var.project_name}-vpc"
   }
 }
 
@@ -14,22 +14,22 @@ resource "aws_vpc" "vpc" {
 resource "aws_subnet" "sn1" {
   cidr_block              = "10.0.1.0/24"
   vpc_id                  = aws_vpc.vpc.id
-  availability_zone       = "${locals.region}a"
+  availability_zone       = "${var.region}a"
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "${locals.project_name}-public-1a"
+    Name = "${var.project_name}-public-1a"
   }
 }
 
 resource "aws_subnet" "sn2" {
   cidr_block              = "10.0.2.0/24"
   vpc_id                  = aws_vpc.vpc.id
-  availability_zone       = "${locals.region}b"
+  availability_zone       = "${var.region}b"
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "${locals.project_name}-public-1b"
+    Name = "${var.project_name}-public-1b"
   }
 }
 
@@ -37,22 +37,22 @@ resource "aws_subnet" "sn2" {
 resource "aws_subnet" "private_sn1" {
   cidr_block              = "10.0.3.0/24"
   vpc_id                  = aws_vpc.vpc.id
-  availability_zone       = "${locals.region}a"
+  availability_zone       = "${var.region}a"
   map_public_ip_on_launch = false
 
   tags = {
-    Name = "${locals.project_name}-private-1a"
+    Name = "${var.project_name}-private-1a"
   }
 }
 
 resource "aws_subnet" "private_sn2" {
   cidr_block              = "10.0.4.0/24"
   vpc_id                  = aws_vpc.vpc.id
-  availability_zone       = "${locals.region}b"
+  availability_zone       = "${var.region}b"
   map_public_ip_on_launch = false
 
   tags = {
-    Name = "${locals.project_name}-private-1b"
+    Name = "${var.project_name}-private-1b"
   }
 }
 
@@ -61,7 +61,7 @@ resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.vpc.id
 
   tags = {
-    Name = "${locals.project_name}-igw"
+    Name = "${var.project_name}-igw"
   }
 }
 
@@ -75,7 +75,7 @@ resource "aws_route_table" "public_rt" {
   }
 
   tags = {
-    Name = "${locals.project_name}-public-rt"
+    Name = "${var.project_name}-public-rt"
   }
 }
 
@@ -84,7 +84,7 @@ resource "aws_route_table" "private_rt" {
   vpc_id = aws_vpc.vpc.id
 
   tags = {
-    Name = "${locals.project_name}-private-rt"
+    Name = "${var.project_name}-private-rt"
   }
 }
 

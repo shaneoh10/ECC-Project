@@ -1,11 +1,11 @@
 # ECS Cluster
 resource "aws_ecs_cluster" "ecs" {
-  name = "${locals.project_name}-cluster"
+  name = "${var.project_name}-cluster"
 }
 
 # Application Load Balancer
 resource "aws_lb" "alb" {
-  name               = "${locals.project_name}-alb"
+  name               = "${var.project_name}-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
@@ -15,7 +15,7 @@ resource "aws_lb" "alb" {
 
 # Target Group for ECS (Forward traffic to port 8000)
 resource "aws_lb_target_group" "tg" {
-  name        = "${locals.project_name}-tg"
+  name        = "${var.project_name}-tg"
   port        = var.app_port
   protocol    = "HTTP"
   vpc_id      = aws_vpc.vpc.id
@@ -45,7 +45,7 @@ resource "aws_lb_listener" "http" {
 
 # Service Discovery Namespace
 resource "aws_service_discovery_private_dns_namespace" "ecs_namespace" {
-  name        = "${locals.project_name}.local"
+  name        = "${var.project_name}.local"
   description = "Service discovery namespace for ECS"
   vpc         = aws_vpc.vpc.id
 }
@@ -70,7 +70,7 @@ resource "aws_service_discovery_service" "postgres_service" {
 
 # ECS Task Definition
 resource "aws_ecs_task_definition" "td" {
-  family                   = "${locals.project_name}-task-definition"
+  family                   = "${var.project_name}-task-definition"
   requires_compatibilities = ["FARGATE"]
   network_mode            = "awsvpc"
   cpu                     = "512"
@@ -114,15 +114,15 @@ resource "aws_ecs_task_definition" "td" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          "awslogs-group"         = "/ecs/${locals.project_name}-db"
-          "awslogs-region"        = locals.region
+          "awslogs-group"         = "/ecs/${var.project_name}-db"
+          "awslogs-region"        = var.region
           "awslogs-stream-prefix" = "postgres"
         }
       }
     },
     {
       name      = "django"
-      image     = "537124959582.dkr.ecr.${locals.region}.amazonaws.com/${locals.project_name}-django:latest"
+      image     = "537124959582.dkr.ecr.${var.region}.amazonaws.com/${var.project_name}-django:latest"
       cpu       = 256
       memory    = 512
       essential = true
@@ -175,8 +175,8 @@ resource "aws_ecs_task_definition" "td" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          "awslogs-group"         = "/ecs/${locals.project_name}-django"
-          "awslogs-region"        = locals.region
+          "awslogs-group"         = "/ecs/${var.project_name}-django"
+          "awslogs-region"        = var.region
           "awslogs-stream-prefix" = "django"
         }
       }
@@ -186,7 +186,7 @@ resource "aws_ecs_task_definition" "td" {
 
 # ECS Service using Fargate
 resource "aws_ecs_service" "service" {
-  name            = "${locals.project_name}-service"
+  name            = "${var.project_name}-service"
   cluster         = aws_ecs_cluster.ecs.arn
   launch_type     = "FARGATE"
   desired_count   = 1

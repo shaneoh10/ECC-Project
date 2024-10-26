@@ -1,3 +1,13 @@
+variable "project_name" {
+  description = "Name of the project to be used in resource naming"
+  type        = string
+}
+
+variable "region" {
+  description = "AWS region"
+  type        = string
+}
+
 variable "app_port" {
   description = "Port the application runs on"
   type        = number

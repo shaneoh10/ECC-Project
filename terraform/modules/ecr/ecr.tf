@@ -1,6 +1,6 @@
 # ECR Repository for Django App
 resource "aws_ecr_repository" "repo_django" {
-  name                 = "${locals.project_name}-django"
+  name                 = "${var.project_name}-django"
   image_tag_mutability = "MUTABLE"
   force_delete         = true
 
@@ -11,7 +11,7 @@ resource "aws_ecr_repository" "repo_django" {
 
 # ECR Repository for Postgres
 resource "aws_ecr_repository" "repo_postgres" {
-  name                 = "${locals.project_name}-postgres"
+  name                 = "${var.project_name}-postgres"
   image_tag_mutability = "MUTABLE"
   force_delete         = true
 
