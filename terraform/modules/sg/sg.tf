@@ -1,8 +1,14 @@
+module "vpc" {
+  source = "../vpc"
+  project_name = var.project_name
+  region = var.region
+}
+
 # ALB Security Group
 resource "aws_security_group" "alb_sg" {
   name        = "alb_sg"
   description = "Security group for Application Load Balancer"
-  vpc_id      = aws_vpc.vpc.id
+  vpc_id      = module.vpc.vpc_id
 
   ingress {
     description = "HTTP from internet"
@@ -37,7 +43,7 @@ resource "aws_security_group" "alb_sg" {
 resource "aws_security_group" "app_sg" {
   name        = "app_sg"
   description = "Security group for ECS tasks"
-  vpc_id      = aws_vpc.vpc.id
+  vpc_id      = module.vpc.vpc_id
 
   # Allow traffic from ALB
   ingress {
@@ -66,7 +72,7 @@ resource "aws_security_group" "app_sg" {
 resource "aws_security_group" "db_sg" {
   name        = "db_sg"
   description = "Security group for PostgreSQL"
-  vpc_id      = aws_vpc.vpc.id
+  vpc_id      = module.vpc.vpc_id
 
   ingress {
     description     = "Allow traffic from ECS app tasks to PostgreSQL"

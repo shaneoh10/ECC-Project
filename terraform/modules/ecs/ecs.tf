@@ -1,3 +1,15 @@
+module "sg" {
+  source = "../sg"
+  project_name = var.project_name
+  region = var.region
+}
+
+module "vpc" {
+  source = "../vpc"
+  project_name = var.project_name
+  region = var.region
+}
+
 # ECS Cluster
 resource "aws_ecs_cluster" "ecs" {
   name = "${var.project_name}-cluster"
@@ -8,8 +20,8 @@ resource "aws_lb" "alb" {
   name               = "${var.project_name}-alb"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = [aws_security_group.alb_sg.id]
-  subnets            = [aws_subnet.sn1.id, aws_subnet.sn2.id]
+  security_groups    = [module.sg.alb_sg_id]
+  subnets            = [module.vpc.public_subnet_1_id, module.vpc.public_subnet_2_id]
   enable_deletion_protection = false
 }
 
@@ -18,7 +30,7 @@ resource "aws_lb_target_group" "tg" {
   name        = "${var.project_name}-tg"
   port        = var.app_port
   protocol    = "HTTP"
-  vpc_id      = aws_vpc.vpc.id
+  vpc_id      = module.vpc.vpc_id
   target_type = "ip"
 
   health_check {
@@ -47,7 +59,7 @@ resource "aws_lb_listener" "http" {
 resource "aws_service_discovery_private_dns_namespace" "ecs_namespace" {
   name        = "${var.project_name}.local"
   description = "Service discovery namespace for ECS"
-  vpc         = aws_vpc.vpc.id
+  vpc         = module.vpc.vpc_id
 }
 
 # Cloud Map Service for PostgreSQL
@@ -199,8 +211,8 @@ resource "aws_ecs_service" "service" {
   }
 
   network_configuration {
-    subnets          = [aws_subnet.sn1.id, aws_subnet.sn2.id]
-    security_groups  = [aws_security_group.app_sg.id]
+    subnets          = [module.vpc.public_subnet_1_id, module.vpc.public_subnet_1_id]
+    security_groups  = [module.sg.app_sg_id]
     assign_public_ip = true
   }
 
