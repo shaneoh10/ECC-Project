@@ -12,8 +12,13 @@ provider "aws" {
     region = "eu-west-1"
 }
 
+module "tf-state" {
+  source      = "./modules/tf-state"
+  bucket_name = "ecc-project-tf-state-backend"
+}
+
 module "ecs" {
-  source = "modules/ecs"
+  source = "./modules/ecs"
 
   postgres_db = var.postgres_db
   postgres_host = var.postgres_host
