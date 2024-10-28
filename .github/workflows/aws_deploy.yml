@@ -1,10 +1,7 @@
 name: AWS Deploy
 
 on:
-  workflow_run:
-    workflows: ["Terraform Apply"]
-    types:
-      - completed
+  workflow_call:
 
 env:
   AWS_REGION: eu-west-1

@@ -1,0 +1,20 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches: ['master', 'main']
+
+jobs:
+  terraform_apply:
+    name: Terraform Apply
+    uses: ./.github/workflows/terraform_apply.yml
+
+  aws_deploy:
+    name: AWS Deploy
+    needs: terraform_apply
+    uses: ./.github/workflows/aws_deploy.yml
+
+  terraform_destroy:
+    name: Terraform Destroy
+    needs: aws_deploy
+    uses: ./.github/workflows/terraform_destroy.yml

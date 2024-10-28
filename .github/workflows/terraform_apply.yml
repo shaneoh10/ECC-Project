@@ -1,8 +1,7 @@
 name: "Terraform Apply"
 
 on:
-  push:
-    branches: ['master', 'main']
+  workflow_call:
 
 jobs:
   terraform:

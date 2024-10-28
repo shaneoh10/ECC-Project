@@ -1,10 +1,7 @@
 name: "Terraform Destroy"
 
 on:
-  workflow_run:
-    workflows: ["AWS Deploy"]
-    types:
-      - completed
+  workflow_call:
 
 jobs:
   terraform:
