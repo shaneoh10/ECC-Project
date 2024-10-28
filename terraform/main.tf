@@ -20,11 +20,6 @@ provider "aws" {
   region = var.region
 }
 
-module "tf-state" {
-  source      = "./modules/tf-state"
-  bucket_name = var.bucket_name
-}
-
 module "ecs" {
   source            = "./modules/ecs"
   project_name      = var.project_name
