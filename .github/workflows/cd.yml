@@ -30,5 +30,6 @@ jobs:
   terraform_destroy:
     name: Terraform Destroy
     needs: aws_deploy
+    if: ${{ always() }}
     uses: ./.github/workflows/terraform_destroy.yml
     secrets: inherit
