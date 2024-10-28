@@ -8,7 +8,6 @@ env:
   CONTAINER_NAME_DB: postgres
   ECS_CLUSTER: ecc-project-cluster
   ECS_SERVICE: ecc-project-service
-  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com
   ECR_REPOSITORY_APP: ecc-project-django
   ECR_REPOSITORY_DB: ecc-project-postgres
   IMAGE_TAG: latest
