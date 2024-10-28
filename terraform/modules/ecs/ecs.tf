@@ -1,9 +1,3 @@
-module "sg" {
-  source = "../sg"
-  project_name = var.project_name
-  region = var.region
-}
-
 module "vpc" {
   source = "../vpc"
   project_name = var.project_name
@@ -20,7 +14,7 @@ resource "aws_lb" "alb" {
   name               = "${var.project_name}-alb"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = [module.sg.alb_sg_id]
+  security_groups    = [module.vpc.alb_sg_id]
   subnets            = [module.vpc.public_subnet_1_id, module.vpc.public_subnet_2_id]
   enable_deletion_protection = false
 }
@@ -212,7 +206,7 @@ resource "aws_ecs_service" "service" {
 
   network_configuration {
     subnets          = [module.vpc.public_subnet_1_id, module.vpc.public_subnet_1_id]
-    security_groups  = [module.sg.app_sg_id]
+    security_groups  = [module.vpc.app_sg_id]
     assign_public_ip = true
   }
 
