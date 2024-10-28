@@ -1,11 +1,11 @@
 terraform {
-    # backend "s3" {
-    #     bucket         = "ecc-project-tf-state-backend"
-    #     key            = "tf-infra/terraform.tfstate"
-    #     region         = "eu-west-1"
-    #     dynamodb_table = "ecc-project-tf-state-locking"
-    #     encrypt        = true
-    # }
+    backend "s3" {
+        bucket         = "ecc-project-tf-state-backend"
+        key            = "tf-infra/terraform.tfstate"
+        region         = "eu-west-1"
+        dynamodb_table = "ecc-project-tf-state-locking"
+        encrypt        = true
+    }
 
     required_version = ">= 1.9.7"
     required_providers {
