@@ -1,10 +1,7 @@
 name: "Terraform Destroy"
 
 on:
-  workflow_run:
-    workflows: ["AWS Deploy"]
-    types:
-      - completed
+  workflow_call:
 
 jobs:
   terraform:
@@ -19,7 +16,7 @@ jobs:
       TF_VAR_postgres_host: ${{ secrets.POSTGRES_HOST }}
     defaults:
       run:
-        working-directory: src
+        working-directory: terraform
     steps:
       - name: Checkout
         uses: actions/checkout@v4
