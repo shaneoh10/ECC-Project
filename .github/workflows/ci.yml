@@ -77,17 +77,19 @@ jobs:
           terraform_wrapper: false
 
       - name: Terraform Format Check
-        id: fmt
         run: |
           terraform fmt -check
 
       - name: Terraform Init
-        id: init
         run: |
           terraform init
 
       - name: Terraform Plan
-        id: plan
+        env:
+          TF_VAR_postgres_db: ${{ secrets.POSTGRES_DB }}
+          TF_VAR_postgres_user: ${{ secrets.POSTGRES_USER }}
+          TF_VAR_postgres_password: ${{ secrets.POSTGRES_PASSWORD }}
+          TF_VAR_postgres_host: ${{ secrets.POSTGRES_HOST }}
         run: |
           terraform plan -no-color
 
