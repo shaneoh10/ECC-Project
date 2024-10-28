@@ -97,4 +97,5 @@ jobs:
         run: |
           if [ ! -f terraform.tfplan ]; then
             echo "Plan file not created, failing the job."
-            exit 1
+            exit 1  # Fail the job if the plan file is not created
+          fi
