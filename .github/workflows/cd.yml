@@ -19,16 +19,16 @@ jobs:
   terraform_apply:
     name: Terraform Apply
     uses: ./.github/workflows/terraform_apply.yml
-    secrets: ${{ secrets }}
+    secrets: inherit
 
   aws_deploy:
     name: AWS Deploy
     needs: terraform_apply
     uses: ./.github/workflows/aws_deploy.yml
-    secrets: ${{ secrets }}
+    secrets: inherit
 
   terraform_destroy:
     name: Terraform Destroy
     needs: aws_deploy
     uses: ./.github/workflows/terraform_destroy.yml
-    secrets: ${{ secrets }}
+    secrets: inherit
