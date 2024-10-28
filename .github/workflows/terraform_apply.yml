@@ -3,6 +3,12 @@ name: "Terraform Apply"
 on:
   workflow_call:
 
+env:
+  TF_VAR_postgres_db: ${{ secrets.POSTGRES_DB }}
+  TF_VAR_postgres_user: ${{ secrets.POSTGRES_USER }}
+  TF_VAR_postgres_password: ${{ secrets.POSTGRES_PASSWORD }}
+  TF_VAR_postgres_host: ${{ secrets.POSTGRES_HOST }}
+
 jobs:
   terraform:
     name: "Terraform Apply"
