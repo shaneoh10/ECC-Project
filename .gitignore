@@ -278,3 +278,13 @@ ecc_project/media/
 .env
 .envs/*
 !.envs/.local/
+
+
+# Terraform
+**/.terraform/*
+*.terraform*
+
+.tfstate files
+*.tfstate
+*.tfstate.*
+*.tfstate*
