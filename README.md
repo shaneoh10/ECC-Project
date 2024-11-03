@@ -45,7 +45,7 @@ Moved to [Live reloading and SASS compilation](https://cookiecutter-django.readt
 
 ## Deployment
 
-The following details how to deploy this application.
+The following details how to deploy this application. 
 
 ### Docker
 
