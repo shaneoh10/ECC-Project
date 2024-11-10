@@ -75,26 +75,26 @@ pipeline {
             }
         }
 
-        // Optional Terraform Stage (Uncomment if needed)
-        /*
-        stage('Terraform') {
-            steps {
-                dir('terraform') {
-                    withEnv([
-                        "TF_VAR_postgres_db=${params.POSTGRES_DB}",
-                        "TF_VAR_postgres_user=${params.POSTGRES_USER}",
-                        "TF_VAR_postgres_password=${params.POSTGRES_PASSWORD}",
-                        "TF_VAR_postgres_host=${params.POSTGRES_HOST}"
-                    ]) {
-                        sh '''
-                            terraform fmt -check
-                            terraform init
-                            terraform plan -no-color -out=terraform.tfplan
-                        '''
+        stage('Cleanup') {
+            always {
+                steps {
+                    // Ensure Docker images, containers, and volumes are cleaned up
+                    sh '''
+                        # Remove unused Docker images, containers, and volumes
+                        docker system prune -f --all --volumes
+                    '''
+
+                    // Clean up the workspace
+                    cleanWs patterns: [
+                        [pattern: '**/*', type: 'INCLUDE']
+                    ]
+                }
+                post {
+                    always {
+                        echo 'Cleanup completed.'
                     }
                 }
             }
         }
-        */
     }
 }
