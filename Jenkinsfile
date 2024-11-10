@@ -76,22 +76,19 @@ pipeline {
         }
 
         stage('Cleanup') {
-            always {
-                steps {
-                    // Ensure Docker images, containers, and volumes are cleaned up
-                    sh '''
-                        # Remove unused Docker images, containers, and volumes
-                        docker system prune -f --all --volumes
-                    '''
+            post {
+                always {
+                    steps {
+                        // Ensure Docker images, containers, and volumes are cleaned up
+                        sh '''
+                            # Remove unused Docker images, containers, and volumes
+                            docker system prune -f --all --volumes
+                        '''
 
-                    // Clean up the workspace
-                    cleanWs patterns: [
-                        [pattern: '**/*', type: 'INCLUDE']
-                    ]
-                }
-                post {
-                    always {
-                        echo 'Cleanup completed.'
+                        // Clean up the workspace
+                        cleanWs patterns: [
+                            [pattern: '**/*', type: 'INCLUDE']
+                        ]
                     }
                 }
             }
