@@ -57,23 +57,23 @@ pipeline {
             }
         }
 
-        stage('Terraform') {
-            steps {
-                dir('terraform') {
-                    withEnv([
-                        "TF_VAR_postgres_db=${params.POSTGRES_DB}",
-                        "TF_VAR_postgres_user=${params.POSTGRES_USER}",
-                        "TF_VAR_postgres_password=${params.POSTGRES_PASSWORD}",
-                        "TF_VAR_postgres_host=${params.POSTGRES_HOST}"
-                    ]) {
-                        sh '''
-                            terraform fmt -check
-                            terraform init
-                            terraform plan -no-color -out=terraform.tfplan
-                        '''
-                    }
-                }
-            }
-        }
+        // stage('Terraform') {
+        //     steps {
+        //         dir('terraform') {
+        //             withEnv([
+        //                 "TF_VAR_postgres_db=${params.POSTGRES_DB}",
+        //                 "TF_VAR_postgres_user=${params.POSTGRES_USER}",
+        //                 "TF_VAR_postgres_password=${params.POSTGRES_PASSWORD}",
+        //                 "TF_VAR_postgres_host=${params.POSTGRES_HOST}"
+        //             ]) {
+        //                 sh '''
+        //                     terraform fmt -check
+        //                     terraform init
+        //                     terraform plan -no-color -out=terraform.tfplan
+        //                 '''
+        //             }
+        //         }
+        //     }
+        // }
     }
 }
