@@ -4,13 +4,6 @@ pipeline {
     environment {
         DOCKER_BUILDKIT = '1'
         COMPOSE_DOCKER_CLI_BUILD = '1'
-        AWS_ACCESS_KEY_ID = credentials('AWS_ACCESS_KEY_ID')  // Match credentials ID exactly
-        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
-        AWS_REGION = 'us-east-1'  // Replace with your default region, if not a credential
-        POSTGRES_DB = credentials('POSTGRES_DB')
-        POSTGRES_USER = credentials('POSTGRES_USER')
-        POSTGRES_PASSWORD = credentials('POSTGRES_PASSWORD')
-        POSTGRES_HOST = credentials('POSTGRES_HOST')
     }
 
     options {
@@ -42,12 +35,12 @@ pipeline {
         stage('Build and Test') {
             steps {
                 script {
-                    // Passing env variables directly for `docker compose` command
+                    // Using parameters directly in `docker compose` commands
                     withEnv([
-                        "POSTGRES_DB=${env.POSTGRES_DB}",
-                        "POSTGRES_USER=${env.POSTGRES_USER}",
-                        "POSTGRES_PASSWORD=${env.POSTGRES_PASSWORD}",
-                        "POSTGRES_HOST=${env.POSTGRES_HOST}"
+                        "POSTGRES_DB=${params.POSTGRES_DB}",
+                        "POSTGRES_USER=${params.POSTGRES_USER}",
+                        "POSTGRES_PASSWORD=${params.POSTGRES_PASSWORD}",
+                        "POSTGRES_HOST=${params.POSTGRES_HOST}"
                     ]) {
                         sh 'docker compose -f docker-compose.local.yml build django'
                         sh 'docker compose -f docker-compose.docs.yml build docs'
@@ -68,10 +61,10 @@ pipeline {
             steps {
                 dir('terraform') {
                     withEnv([
-                        "TF_VAR_postgres_db=${env.POSTGRES_DB}",
-                        "TF_VAR_postgres_user=${env.POSTGRES_USER}",
-                        "TF_VAR_postgres_password=${env.POSTGRES_PASSWORD}",
-                        "TF_VAR_postgres_host=${env.POSTGRES_HOST}"
+                        "TF_VAR_postgres_db=${params.POSTGRES_DB}",
+                        "TF_VAR_postgres_user=${params.POSTGRES_USER}",
+                        "TF_VAR_postgres_password=${params.POSTGRES_PASSWORD}",
+                        "TF_VAR_postgres_host=${params.POSTGRES_HOST}"
                     ]) {
                         sh '''
                             terraform fmt -check
