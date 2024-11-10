@@ -3,6 +3,7 @@ pipeline {
     environment {
         DOCKER_BUILDKIT = '1'
         COMPOSE_DOCKER_CLI_BUILD = '1'
+        PRE_COMMIT_CACHE = '/var/lib/jenkins/workspace/ecc-project/.pre-commit-cache'
     }
     options {
         disableConcurrentBuilds()
@@ -22,6 +23,9 @@ pipeline {
             }
             steps {
                 sh '''
+                    # Create cache directory with correct permissions
+                    mkdir -p ${PRE_COMMIT_CACHE}
+                    
                     # Create and activate virtual environment
                     python -m venv .venv
                     . .venv/bin/activate
@@ -34,8 +38,11 @@ pipeline {
                     deactivate
                 '''
                 
-                // Clean up virtual environment
-                cleanWs patterns: [[pattern: '.venv/**', type: 'INCLUDE']]
+                // Clean up virtual environment and cache
+                cleanWs patterns: [
+                    [pattern: '.venv/**', type: 'INCLUDE'],
+                    [pattern: '.pre-commit-cache/**', type: 'INCLUDE']
+                ]
             }
         }
         stage('Build and Test') {
