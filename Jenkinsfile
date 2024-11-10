@@ -29,7 +29,7 @@ pipeline {
                     
                     # Install and run pre-commit
                     pip install pre-commit
-                    pre-commit run --all-files
+                    pre-commit run --all-files --home="${WORKSPACE}/.cache"
                     
                     # Deactivate virtual environment
                     deactivate
