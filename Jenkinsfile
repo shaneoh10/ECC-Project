@@ -3,8 +3,8 @@ pipeline {
     environment {
         DOCKER_BUILDKIT = '1'
         COMPOSE_DOCKER_CLI_BUILD = '1'
-        // Set pre-commit cache directory to workspace
-        PRE_COMMIT_HOME = '/var/lib/jenkins/.cache/pre-commit/.pre-commit-cache'
+        // Set pre-commit cache to a writable temp directory
+        PRE_COMMIT_HOME = '/tmp/.pre-commit-cache'
     }
     options {
         disableConcurrentBuilds()
