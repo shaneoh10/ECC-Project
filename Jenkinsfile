@@ -3,6 +3,8 @@ pipeline {
     environment {
         DOCKER_BUILDKIT = '1'
         COMPOSE_DOCKER_CLI_BUILD = '1'
+        // Set pre-commit cache directory to workspace
+        PRE_COMMIT_HOME = '/var/lib/jenkins/.cache/pre-commit/.pre-commit-cache'
     }
     options {
         disableConcurrentBuilds()
@@ -18,27 +20,29 @@ pipeline {
                 docker {
                     image 'python:3.12'
                     reuseNode true
-                    args '-v ${WORKSPACE}/.cache:/root/.cache -e HOME=/root'
                 }
             }
             steps {
                 sh '''
+                    # Create cache directory with correct permissions
+                    mkdir -p ${PRE_COMMIT_HOME}
+                    
                     # Create and activate virtual environment
                     python -m venv .venv
                     . .venv/bin/activate
                     
                     # Install and run pre-commit
                     pip install pre-commit
-                    pre-commit run --all-files --home="${WORKSPACE}/.cache"
+                    pre-commit run --all-files
                     
                     # Deactivate virtual environment
                     deactivate
                 '''
                 
-                // Clean up
+                // Clean up virtual environment and cache
                 cleanWs patterns: [
                     [pattern: '.venv/**', type: 'INCLUDE'],
-                    [pattern: '.cache/**', type: 'INCLUDE']
+                    [pattern: '.pre-commit-cache/**', type: 'INCLUDE']
                 ]
             }
         }
