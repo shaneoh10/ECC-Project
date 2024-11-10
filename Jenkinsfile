@@ -1,22 +1,18 @@
 pipeline {
     agent any
-
     environment {
         DOCKER_BUILDKIT = '1'
         COMPOSE_DOCKER_CLI_BUILD = '1'
     }
-
     options {
         disableConcurrentBuilds()
     }
-
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-
         stage('Linting') {
             agent {
                 docker {
@@ -26,12 +22,22 @@ pipeline {
             }
             steps {
                 sh '''
+                    # Create and activate virtual environment
+                    python -m venv .venv
+                    . .venv/bin/activate
+                    
+                    # Install and run pre-commit
                     pip install pre-commit
                     pre-commit run --all-files
+                    
+                    # Deactivate virtual environment
+                    deactivate
                 '''
+                
+                // Clean up virtual environment
+                cleanWs patterns: [[pattern: '.venv/**', type: 'INCLUDE']]
             }
         }
-
         stage('Build and Test') {
             steps {
                 script {
@@ -56,7 +62,6 @@ pipeline {
                 }
             }
         }
-
         // stage('Terraform') {
         //     steps {
         //         dir('terraform') {
