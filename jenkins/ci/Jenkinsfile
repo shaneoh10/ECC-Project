@@ -26,15 +26,17 @@ pipeline {
                     }
                     steps {
                         sh '''
-                            # Create cache directory with correct permissions
-                            mkdir -p ${PRE_COMMIT_HOME}
-
-                            # Create and activate virtual environment
+                            # Create and set permissions for virtual environment directory
                             python -m venv .venv
+                            chmod -R 777 .venv
+
+                            # Activate virtual environment
                             . .venv/bin/activate
 
-                            # Install and run pre-commit
+                            # Install pre-commit
                             pip install pre-commit
+
+                            # Run your pre-commit commands here
                             pre-commit run --all-files
 
                             # Deactivate virtual environment
