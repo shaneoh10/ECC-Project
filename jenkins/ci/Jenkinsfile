@@ -77,10 +77,6 @@ pipeline {
                     # Remove unused Docker images, containers, and volumes
                     docker system prune -f --all --volumes
                 '''
-                // Clean up the workspace
-                cleanWs patterns: [
-                    [pattern: '**/*', type: 'INCLUDE']
-                ]
             }
         }
     }
