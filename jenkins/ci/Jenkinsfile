@@ -26,19 +26,21 @@ pipeline {
                     }
                     steps {
                         sh '''
-                            # Create and set permissions for virtual environment directory
-                            python -m venv .venv
-                            sudo chmod -R 777 .venv
-                            # Activate virtual environment
-                            . .venv/bin/activate
-                            # Install pre-commit
-                            sudo -H pip install pre-commit
-                            # Run your pre-commit commands here
-                            sudo pre-commit run --all-files
-                            
-                            deactivate
+                        # Set pip to install packages in the workspace
+                        export PIP_USER=false
+                        export PYTHONUSERBASE=$WORKSPACE/.pip-packages
+                        
+                        # Install pre-commit
+                        pip install --user pre-commit
+                        
+                        # Add the local bin to PATH
+                        export PATH=$WORKSPACE/.pip-packages/bin:$PATH
+                        
+                        # Run your pre-commit commands here
+                        pre-commit run --all-files
                         '''
                         cleanWs patterns: [
+                            [pattern: '.pip-packages/**', type: 'INCLUDE'],
                             [pattern: '.pre-commit-cache/**', type: 'INCLUDE']
                         ]
                     }
