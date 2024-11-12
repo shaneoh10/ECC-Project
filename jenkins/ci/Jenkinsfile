@@ -29,13 +29,13 @@ pipeline {
                         # Set pip to install packages in the workspace
                         export PIP_USER=false
                         export PYTHONUSERBASE=$WORKSPACE/.pip-packages
-                        
+
                         # Install pre-commit
                         pip install --user pre-commit
-                        
+
                         # Add the local bin to PATH
                         export PATH=$WORKSPACE/.pip-packages/bin:$PATH
-                        
+
                         # Run your pre-commit commands here
                         pre-commit run --all-files
                         '''
