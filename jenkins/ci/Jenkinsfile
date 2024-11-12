@@ -26,11 +26,17 @@ pipeline {
                     }
                     steps {
                         sh '''
-                        # Install pre-commit
-                        pip install pre-commit
-
-                        # Run your pre-commit commands here
-                        pre-commit run --all-files
+                            # Create and set permissions for virtual environment directory
+                            python -m venv .venv
+                            sudo chmod -R 777 .venv
+                            # Activate virtual environment
+                            . .venv/bin/activate
+                            # Install pre-commit
+                            sudo -H pip install pre-commit
+                            # Run your pre-commit commands here
+                            sudo pre-commit run --all-files
+                            
+                            deactivate
                         '''
                         cleanWs patterns: [
                             [pattern: '.pre-commit-cache/**', type: 'INCLUDE']
