@@ -26,21 +26,13 @@ pipeline {
                     }
                     steps {
                         sh '''
-                        # Create and set permissions for virtual environment directory
-                        python -m venv .venv
-                        chmod -R 777 .venv
-                        # Activate virtual environment
-                        . .venv/bin/activate
                         # Install pre-commit
                         pip install pre-commit
+
                         # Run your pre-commit commands here
                         pre-commit run --all-files
-                        # Deactivate virtual environment
-                        deactivate
                         '''
-                        // Clean up virtual environment and cache
                         cleanWs patterns: [
-                            [pattern: '.venv/**', type: 'INCLUDE'],
                             [pattern: '.pre-commit-cache/**', type: 'INCLUDE']
                         ]
                     }
