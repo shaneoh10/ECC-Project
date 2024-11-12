@@ -38,9 +38,7 @@ pipeline {
                             
                             deactivate
                         '''
-                        // Clean up virtual environment and cache
                         cleanWs patterns: [
-                            [pattern: '.venv/**', type: 'INCLUDE'],
                             [pattern: '.pre-commit-cache/**', type: 'INCLUDE']
                         ]
                     }
