@@ -1,32 +1,77 @@
-name: Jenkins CI Trigger
+name: Jenkins Pipeline Integration
 
 on:
-    pull_request:
-        branches: ['master', 'main']
-        paths-ignore: ['docs/**']
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   trigger-jenkins:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Jenkins CI
-        uses: enflo/jenkins-action@v2
-        with:
-          url: ${{ secrets.JENKINS_URL }}
-          user: ${{ secrets.JENKINS_USER }}
-          token: ${{ secrets.JENKINS_TOKEN }}
-          job: "ecc-project"
-          wait: true
-          timeout: "600"
-          parameters: |
-            {
-              "GITHUB_PR_NUMBER": "${{ github.event.pull_request.number }}",
-              "GITHUB_REPO": "${{ github.repository }}",
-              "GITHUB_SHA": "${{ github.sha }}"
-            }
-
-      - name: Check Jenkins Result
-        if: steps.jenkins.outcome != 'success'
+      - name: Trigger Jenkins Job
+        id: trigger
         run: |
-          echo "Jenkins job failed or timed out"
+          # Trigger the job and get the queue location
+          QUEUE_URL=$(curl -s -X POST \
+            -H "Authorization: Basic ${{ secrets.JENKINS_TOKEN }}" \
+            "${{ secrets.JENKINS_URL }}/job/ecc-project/buildWithParameters?PR_NUMBER=${{ github.event.pull_request.number }}&GITHUB_SHA=${{ github.sha }}" \
+            -D - | grep -i "location:" | cut -d " " -f 2- | tr -d '\r')
+
+          echo "Queue URL: $QUEUE_URL"
+          echo "queue_url=$QUEUE_URL" >> $GITHUB_OUTPUT
+
+      - name: Get Build ID
+        id: build
+        run: |
+          # Function to extract build number from queue item
+          get_build_number() {
+            curl -s -H "Authorization: Basic ${{ secrets.JENKINS_TOKEN }}" "$1api/json" | \
+              jq -r '.executable.number // empty'
+          }
+
+          # Poll until we get a build number
+          QUEUE_URL="${{ steps.trigger.outputs.queue_url }}"
+          for i in {1..30}; do
+            BUILD_NUMBER=$(get_build_number "$QUEUE_URL")
+            if [ ! -z "$BUILD_NUMBER" ]; then
+              echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+              break
+            fi
+            sleep 10
+          done
+
+          if [ -z "$BUILD_NUMBER" ]; then
+            echo "Failed to get build number after 5 minutes"
+            exit 1
+          fi
+
+      - name: Wait for Build Completion
+        run: |
+          # Function to check build status
+          get_build_status() {
+            curl -s -H "Authorization: Basic ${{ secrets.JENKINS_TOKEN }}" \
+              "${{ secrets.JENKINS_URL }}/job/ecc-project/${{ steps.build.outputs.build_number }}/api/json" | \
+              jq -r '.result'
+          }
+
+          # Poll until build completes
+          for i in {1..60}; do
+            STATUS=$(get_build_status)
+            echo "Current status: $STATUS"
+
+            if [ "$STATUS" = "SUCCESS" ]; then
+              exit 0
+            elif [ "$STATUS" = "FAILURE" ] || [ "$STATUS" = "ABORTED" ]; then
+              echo "Build failed or was aborted"
+              exit 1
+            elif [ "$STATUS" = "null" ]; then
+              sleep 30
+              continue
+            else
+              echo "Unexpected status: $STATUS"
+              exit 1
+            fi
+          done
+
+          echo "Build timed out after 30 minutes"
           exit 1
