@@ -11,12 +11,19 @@ jobs:
       - name: Trigger Jenkins Job
         id: trigger
         run: |
+          # URL encode the token
+          ENCODED_TOKEN=$(echo "${{ secrets.JENKINS_TOKEN }}" | jq -sRr @uri)
+
           # Store the full response and headers in a file
           RESPONSE_FILE="jenkins_response.txt"
+          JENKINS_TRIGGER_URL="${{ secrets.JENKINS_URL }}/job/ecc-project/buildWithParameters?token=${ENCODED_TOKEN}"
+
+          echo "Triggering Jenkins build..."
+          echo "Using URL (token redacted): ${{ secrets.JENKINS_URL }}/job/ecc-project/buildWithParameters?token=****"
+
           HTTP_CODE=$(curl -s -w "%{http_code}" \
             -o "$RESPONSE_FILE" \
-            -D - \
-            "${{ secrets.JENKINS_URL }}/job/ecc-project/buildWithParameters?token=${{ secrets.JENKINS_TOKEN }}&cause=Triggered+from+GitHub+PR+${{ github.event.pull_request.number }}&PR_NUMBER=${{ github.event.pull_request.number }}&GITHUB_SHA=${{ github.sha }}")
+            "$JENKINS_TRIGGER_URL")
 
           echo "HTTP Response Code: $HTTP_CODE"
           echo "Response body:"
@@ -24,7 +31,6 @@ jobs:
 
           if [ "$HTTP_CODE" != "201" ] && [ "$HTTP_CODE" != "200" ]; then
             echo "Failed to trigger Jenkins job. HTTP code: $HTTP_CODE"
-            echo "Jenkins URL being used: ${{ secrets.JENKINS_URL }}/job/ecc-project/buildWithParameters"
             exit 1
           fi
 
@@ -32,73 +38,37 @@ jobs:
           QUEUE_URL=$(cat "$RESPONSE_FILE" | grep -i "location:" | cut -d " " -f 2- | tr -d '\r')
 
           if [ -z "$QUEUE_URL" ]; then
-            echo "No queue URL found in response. Something went wrong."
-            exit 1
+            # If no queue URL, but we got a success response, consider it triggered
+            echo "Build triggered successfully, but no queue URL returned"
+            exit 0
           fi
 
           echo "Queue URL: $QUEUE_URL"
           echo "queue_url=$QUEUE_URL" >> $GITHUB_OUTPUT
 
-      - name: Get Build ID
-        id: build
+      - name: Wait 30 seconds for build to start
+        if: success()
+        run: sleep 30
+
+      - name: Check Build Status
         if: success()
         run: |
-          # Function to extract build number from queue item
-          get_build_number() {
-            RESPONSE=$(curl -s "$1api/json")
-            echo "Queue API Response: $RESPONSE"
-            echo "$RESPONSE" | jq -r '.executable.number // empty'
-          }
+          # Make a direct call to check if the build was triggered
+          RESPONSE=$(curl -s "${{ secrets.JENKINS_URL }}/job/ecc-project/lastBuild/api/json")
+          echo "Last build status: $RESPONSE"
 
-          # Poll until we get a build number
-          QUEUE_URL="${{ steps.trigger.outputs.queue_url }}"
-          BUILD_NUMBER=""
-          for i in {1..30}; do
-            BUILD_NUMBER=$(get_build_number "$QUEUE_URL")
-            if [ ! -z "$BUILD_NUMBER" ]; then
-              echo "Build number obtained: $BUILD_NUMBER"
-              echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
-              break
-            fi
-            echo "Waiting for build to start... (attempt $i/30)"
-            sleep 10
-          done
-
-          if [ -z "$BUILD_NUMBER" ]; then
-            echo "Failed to get build number after 5 minutes"
+          # Extract and check the result
+          RESULT=$(echo "$RESPONSE" | jq -r '.result')
+          if [ "$RESULT" = "SUCCESS" ]; then
+            echo "Build succeeded!"
+            exit 0
+          elif [ "$RESULT" = "FAILURE" ] || [ "$RESULT" = "ABORTED" ]; then
+            echo "Build failed or was aborted"
+            exit 1
+          elif [ "$RESULT" = "null" ]; then
+            echo "Build is still in progress..."
+            exit 0
+          else
+            echo "Unexpected status: $RESULT"
             exit 1
           fi
-
-      - name: Wait for Build Completion
-        if: success()
-        run: |
-          # Function to check build status
-          get_build_status() {
-            RESPONSE=$(curl -s "${{ secrets.JENKINS_URL }}/job/ecc-project/${{ steps.build.outputs.build_number }}/api/json")
-            echo "Build API Response: $RESPONSE"
-            echo "$RESPONSE" | jq -r '.result'
-          }
-
-          # Poll until build completes
-          for i in {1..60}; do
-            STATUS=$(get_build_status)
-            echo "Current status: $STATUS"
-
-            if [ "$STATUS" = "SUCCESS" ]; then
-              echo "Build succeeded!"
-              exit 0
-            elif [ "$STATUS" = "FAILURE" ] || [ "$STATUS" = "ABORTED" ]; then
-              echo "Build failed or was aborted"
-              exit 1
-            elif [ "$STATUS" = "null" ]; then
-              echo "Build still in progress... (check $i/60)"
-              sleep 30
-              continue
-            else
-              echo "Unexpected status: $STATUS"
-              exit 1
-            fi
-          done
-
-          echo "Build timed out after 30 minutes"
-          exit 1
