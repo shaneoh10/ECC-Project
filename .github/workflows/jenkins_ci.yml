@@ -11,10 +11,9 @@ jobs:
       - name: Trigger Jenkins Job
         id: trigger
         run: |
-          # Trigger the job and get the queue location
+          # Trigger the job with token and get the queue location
           QUEUE_URL=$(curl -s -X POST \
-            -H "Authorization: Basic ${{ secrets.JENKINS_TOKEN }}" \
-            "${{ secrets.JENKINS_URL }}/job/ecc-project/buildWithParameters?PR_NUMBER=${{ github.event.pull_request.number }}&GITHUB_SHA=${{ github.sha }}" \
+            "${{ secrets.JENKINS_URL }}/job/ecc-project/buildWithParameters?token=${{ secrets.JENKINS_TOKEN }}&cause=Triggered+from+GitHub+PR+${{ github.event.pull_request.number }}&PR_NUMBER=${{ github.event.pull_request.number }}&GITHUB_SHA=${{ github.sha }}" \
             -D - | grep -i "location:" | cut -d " " -f 2- | tr -d '\r')
 
           echo "Queue URL: $QUEUE_URL"
@@ -25,18 +24,19 @@ jobs:
         run: |
           # Function to extract build number from queue item
           get_build_number() {
-            curl -s -H "Authorization: Basic ${{ secrets.JENKINS_TOKEN }}" "$1api/json" | \
-              jq -r '.executable.number // empty'
+            curl -s "$1api/json" | jq -r '.executable.number // empty'
           }
 
           # Poll until we get a build number
           QUEUE_URL="${{ steps.trigger.outputs.queue_url }}"
+          BUILD_NUMBER=""
           for i in {1..30}; do
             BUILD_NUMBER=$(get_build_number "$QUEUE_URL")
             if [ ! -z "$BUILD_NUMBER" ]; then
               echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
               break
             fi
+            echo "Waiting for build to start... (attempt $i/30)"
             sleep 10
           done
 
@@ -49,8 +49,7 @@ jobs:
         run: |
           # Function to check build status
           get_build_status() {
-            curl -s -H "Authorization: Basic ${{ secrets.JENKINS_TOKEN }}" \
-              "${{ secrets.JENKINS_URL }}/job/ecc-project/${{ steps.build.outputs.build_number }}/api/json" | \
+            curl -s "${{ secrets.JENKINS_URL }}/job/ecc-project/${{ steps.build.outputs.build_number }}/api/json" | \
               jq -r '.result'
           }
 
@@ -60,11 +59,13 @@ jobs:
             echo "Current status: $STATUS"
 
             if [ "$STATUS" = "SUCCESS" ]; then
+              echo "Build succeeded!"
               exit 0
             elif [ "$STATUS" = "FAILURE" ] || [ "$STATUS" = "ABORTED" ]; then
               echo "Build failed or was aborted"
               exit 1
             elif [ "$STATUS" = "null" ]; then
+              echo "Build still in progress... (check $i/60)"
               sleep 30
               continue
             else
