@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Jenkins CI
-        id: jenkins
         uses: enflo/jenkins-action@v2
         with:
           url: ${{ secrets.JENKINS_URL }}
