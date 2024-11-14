@@ -13,10 +13,14 @@ jobs:
       - name: Trigger Jenkins Job
         env:
           JENKINS_URL: ${{ secrets.JENKINS_URL }}
+          JENKINS_USER: ${{ secrets.JENKINS_USER }}
           JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
         run: |
-          response=$(curl -s -w "%{http_code}" "${JENKINS_URL}/buildWithParameters?token=${JENKINS_TOKEN}")
-          if [[ $response == *"201"* ]] || [[ $response == *"200"* ]]; then
+          response=$(curl -X POST -L \
+            --user "${JENKINS_USER}:${JENKINS_TOKEN}" \
+            "${JENKINS_URL}/buildWithParameters?token=${JENKINS_TOKEN}")
+
+          if [ $? -eq 0 ]; then
             echo "Successfully triggered Jenkins pipeline"
           else
             echo "Failed to trigger Jenkins pipeline"
