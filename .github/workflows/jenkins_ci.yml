@@ -11,20 +11,43 @@ jobs:
       - name: Trigger Jenkins Job
         id: trigger
         run: |
-          # Trigger the job with token and get the queue location
-          QUEUE_URL=$(curl -s -X POST \
-            "${{ secrets.JENKINS_URL }}/job/ecc-project/buildWithParameters?token=${{ secrets.JENKINS_TOKEN }}&cause=Triggered+from+GitHub+PR+${{ github.event.pull_request.number }}&PR_NUMBER=${{ github.event.pull_request.number }}&GITHUB_SHA=${{ github.sha }}" \
-            -D - | grep -i "location:" | cut -d " " -f 2- | tr -d '\r')
+          # Store the full response and headers in a file
+          RESPONSE_FILE="jenkins_response.txt"
+          HTTP_CODE=$(curl -s -w "%{http_code}" \
+            -o "$RESPONSE_FILE" \
+            -D - \
+            "${{ secrets.JENKINS_URL }}/job/ecc-project/buildWithParameters?token=${{ secrets.JENKINS_TOKEN }}&cause=Triggered+from+GitHub+PR+${{ github.event.pull_request.number }}&PR_NUMBER=${{ github.event.pull_request.number }}&GITHUB_SHA=${{ github.sha }}")
+
+          echo "HTTP Response Code: $HTTP_CODE"
+          echo "Response body:"
+          cat "$RESPONSE_FILE"
+
+          if [ "$HTTP_CODE" != "201" ] && [ "$HTTP_CODE" != "200" ]; then
+            echo "Failed to trigger Jenkins job. HTTP code: $HTTP_CODE"
+            echo "Jenkins URL being used: ${{ secrets.JENKINS_URL }}/job/ecc-project/buildWithParameters"
+            exit 1
+          fi
+
+          # Extract queue URL from response headers if present
+          QUEUE_URL=$(cat "$RESPONSE_FILE" | grep -i "location:" | cut -d " " -f 2- | tr -d '\r')
+
+          if [ -z "$QUEUE_URL" ]; then
+            echo "No queue URL found in response. Something went wrong."
+            exit 1
+          fi
 
           echo "Queue URL: $QUEUE_URL"
           echo "queue_url=$QUEUE_URL" >> $GITHUB_OUTPUT
 
       - name: Get Build ID
         id: build
+        if: success()
         run: |
           # Function to extract build number from queue item
           get_build_number() {
-            curl -s "$1api/json" | jq -r '.executable.number // empty'
+            RESPONSE=$(curl -s "$1api/json")
+            echo "Queue API Response: $RESPONSE"
+            echo "$RESPONSE" | jq -r '.executable.number // empty'
           }
 
           # Poll until we get a build number
@@ -33,6 +56,7 @@ jobs:
           for i in {1..30}; do
             BUILD_NUMBER=$(get_build_number "$QUEUE_URL")
             if [ ! -z "$BUILD_NUMBER" ]; then
+              echo "Build number obtained: $BUILD_NUMBER"
               echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
               break
             fi
@@ -46,11 +70,13 @@ jobs:
           fi
 
       - name: Wait for Build Completion
+        if: success()
         run: |
           # Function to check build status
           get_build_status() {
-            curl -s "${{ secrets.JENKINS_URL }}/job/ecc-project/${{ steps.build.outputs.build_number }}/api/json" | \
-              jq -r '.result'
+            RESPONSE=$(curl -s "${{ secrets.JENKINS_URL }}/job/ecc-project/${{ steps.build.outputs.build_number }}/api/json")
+            echo "Build API Response: $RESPONSE"
+            echo "$RESPONSE" | jq -r '.result'
           }
 
           # Poll until build completes
