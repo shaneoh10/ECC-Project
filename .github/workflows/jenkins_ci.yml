@@ -18,7 +18,7 @@ jobs:
         run: |
           response=$(curl -X POST -L \
             --user "${JENKINS_USER}:${JENKINS_TOKEN}" \
-            "${JENKINS_URL}/buildWithParameters?token=${JENKINS_TOKEN}")
+            "${JENKINS_URL}/job/ecc-project/buildWithParameters?token=${JENKINS_TOKEN}")
 
           if [ $? -eq 0 ]; then
             echo "Successfully triggered Jenkins pipeline"
