@@ -1,74 +1,71 @@
-name: Jenkins Pipeline Integration
+name: Trigger Jenkins Pipeline
 
 on:
+  push:
+    branches: [ main ]
   pull_request:
-    types: [opened, synchronize, reopened]
+    branches: [ main ]
 
 jobs:
   trigger-jenkins:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Jenkins Job
-        id: trigger
+        id: jenkins
+        env:
+          JENKINS_URL: ${{ secrets.JENKINS_URL }}
+          JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
         run: |
-          # URL encode the token
-          ENCODED_TOKEN=$(echo "${{ secrets.JENKINS_TOKEN }}" | jq -sRr @uri)
-
-          # Store the full response and headers in a file
-          RESPONSE_FILE="jenkins_response.txt"
-          JENKINS_TRIGGER_URL="${{ secrets.JENKINS_URL }}/job/ecc-project/buildWithParameters?token=${ENCODED_TOKEN}"
-
-          echo "Triggering Jenkins build..."
-          echo "Using URL (token redacted): ${{ secrets.JENKINS_URL }}/job/ecc-project/buildWithParameters?token=****"
-
-          HTTP_CODE=$(curl -s -w "%{http_code}" \
-            -o "$RESPONSE_FILE" \
-            "$JENKINS_TRIGGER_URL")
-
-          echo "HTTP Response Code: $HTTP_CODE"
-          echo "Response body:"
-          cat "$RESPONSE_FILE"
-
-          if [ "$HTTP_CODE" != "201" ] && [ "$HTTP_CODE" != "200" ]; then
-            echo "Failed to trigger Jenkins job. HTTP code: $HTTP_CODE"
-            exit 1
-          fi
-
-          # Extract queue URL from response headers if present
-          QUEUE_URL=$(cat "$RESPONSE_FILE" | grep -i "location:" | cut -d " " -f 2- | tr -d '\r')
-
-          if [ -z "$QUEUE_URL" ]; then
-            # If no queue URL, but we got a success response, consider it triggered
-            echo "Build triggered successfully, but no queue URL returned"
-            exit 0
-          fi
+          # Trigger Jenkins job and get queue ID from Location header
+          QUEUE_URL=$(curl -s -w "%{http_code}" -X POST \
+            "${JENKINS_URL}/job/ecc-project/buildWithParameters?token=${JENKINS_TOKEN}" \
+            -o /dev/null -D - | grep -i "location:" | cut -d" " -f2 | tr -d '\r')
 
           echo "Queue URL: $QUEUE_URL"
-          echo "queue_url=$QUEUE_URL" >> $GITHUB_OUTPUT
 
-      - name: Wait 30 seconds for build to start
-        if: success()
-        run: sleep 30
+          # Extract build ID by polling queue URL
+          BUILD_ID=""
+          for i in {1..30}; do
+            BUILD_URL=$(curl -s "$QUEUE_URL"api/json | jq -r '.executable.url // empty')
+            if [ ! -z "$BUILD_URL" ]; then
+              BUILD_ID=$(echo "$BUILD_URL" | grep -o '[0-9]\+/$' | tr -d '/')
+              break
+            fi
+            sleep 10
+          done
 
-      - name: Check Build Status
-        if: success()
-        run: |
-          # Make a direct call to check if the build was triggered
-          RESPONSE=$(curl -s "${{ secrets.JENKINS_URL }}/job/ecc-project/lastBuild/api/json")
-          echo "Last build status: $RESPONSE"
-
-          # Extract and check the result
-          RESULT=$(echo "$RESPONSE" | jq -r '.result')
-          if [ "$RESULT" = "SUCCESS" ]; then
-            echo "Build succeeded!"
-            exit 0
-          elif [ "$RESULT" = "FAILURE" ] || [ "$RESULT" = "ABORTED" ]; then
-            echo "Build failed or was aborted"
-            exit 1
-          elif [ "$RESULT" = "null" ]; then
-            echo "Build is still in progress..."
-            exit 0
-          else
-            echo "Unexpected status: $RESULT"
+          if [ -z "$BUILD_ID" ]; then
+            echo "Failed to get build ID after 5 minutes"
             exit 1
           fi
+
+          echo "Build ID: $BUILD_ID"
+          echo "build_id=$BUILD_ID" >> $GITHUB_OUTPUT
+          echo "jenkins_url=$JENKINS_URL" >> $GITHUB_OUTPUT
+
+      - name: Wait for Jenkins Build
+        env:
+          JENKINS_URL: ${{ secrets.JENKINS_URL }}
+        run: |
+          BUILD_ID=${{ steps.jenkins.outputs.build_id }}
+
+          # Poll build status until completion or timeout
+          for i in {1..60}; do
+            STATUS=$(curl -s "${JENKINS_URL}/job/ecc-project/$BUILD_ID/api/json" | \
+                     jq -r '.result')
+
+            echo "Build status: $STATUS"
+
+            if [ "$STATUS" = "SUCCESS" ]; then
+              echo "Build succeeded!"
+              exit 0
+            elif [ "$STATUS" = "FAILURE" ] || [ "$STATUS" = "ABORTED" ]; then
+              echo "Build failed with status: $STATUS"
+              exit 1
+            fi
+
+            sleep 30
+          done
+
+          echo "Build timed out after 30 minutes"
+          exit 1
