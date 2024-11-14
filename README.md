@@ -27,7 +27,7 @@ Running type checks with mypy:
 
     $ mypy ecc_project
 
-### Test coverage
+### Test coverages
 
 To run the tests, check your test coverage, and generate an HTML coverage report:
 
