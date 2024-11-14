@@ -11,61 +11,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Jenkins Job
-        id: jenkins
         env:
           JENKINS_URL: ${{ secrets.JENKINS_URL }}
           JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
         run: |
-          # Trigger Jenkins job and get queue ID from Location header
-          QUEUE_URL=$(curl -s -w "%{http_code}" -X POST \
-            "${JENKINS_URL}/job/ecc-project/buildWithParameters?token=${JENKINS_TOKEN}" \
-            -o /dev/null -D - | grep -i "location:" | cut -d" " -f2 | tr -d '\r')
-
-          echo "Queue URL: $QUEUE_URL"
-
-          # Extract build ID by polling queue URL
-          BUILD_ID=""
-          for i in {1..30}; do
-            BUILD_URL=$(curl -s "$QUEUE_URL"api/json | jq -r '.executable.url // empty')
-            if [ ! -z "$BUILD_URL" ]; then
-              BUILD_ID=$(echo "$BUILD_URL" | grep -o '[0-9]\+/$' | tr -d '/')
-              break
-            fi
-            sleep 10
-          done
-
-          if [ -z "$BUILD_ID" ]; then
-            echo "Failed to get build ID after 5 minutes"
+          response=$(curl -s -w "%{http_code}" "${JENKINS_URL}/buildWithParameters?token=${JENKINS_TOKEN}")
+          if [[ $response == *"201"* ]] || [[ $response == *"200"* ]]; then
+            echo "Successfully triggered Jenkins pipeline"
+          else
+            echo "Failed to trigger Jenkins pipeline"
             exit 1
           fi
-
-          echo "Build ID: $BUILD_ID"
-          echo "build_id=$BUILD_ID" >> $GITHUB_OUTPUT
-          echo "jenkins_url=$JENKINS_URL" >> $GITHUB_OUTPUT
-
-      - name: Wait for Jenkins Build
-        env:
-          JENKINS_URL: ${{ secrets.JENKINS_URL }}
-        run: |
-          BUILD_ID=${{ steps.jenkins.outputs.build_id }}
-
-          # Poll build status until completion or timeout
-          for i in {1..60}; do
-            STATUS=$(curl -s "${JENKINS_URL}/job/ecc-project/$BUILD_ID/api/json" | \
-                     jq -r '.result')
-
-            echo "Build status: $STATUS"
-
-            if [ "$STATUS" = "SUCCESS" ]; then
-              echo "Build succeeded!"
-              exit 0
-            elif [ "$STATUS" = "FAILURE" ] || [ "$STATUS" = "ABORTED" ]; then
-              echo "Build failed with status: $STATUS"
-              exit 1
-            fi
-
-            sleep 30
-          done
-
-          echo "Build timed out after 30 minutes"
-          exit 1
