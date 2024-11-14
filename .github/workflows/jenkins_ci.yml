@@ -1,0 +1,33 @@
+name: Jenkins CI Trigger
+
+on:
+    pull_request:
+        branches: ['master', 'main']
+        paths-ignore: ['docs/**']
+
+jobs:
+  trigger-jenkins:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Jenkins CI
+        id: jenkins
+        uses: enflo/jenkins-action@v2
+        with:
+          url: ${{ secrets.JENKINS_URL }}
+          user: ${{ secrets.JENKINS_USER }}
+          token: ${{ secrets.JENKINS_TOKEN }}
+          job: "ecc-project"
+          wait: true
+          timeout: "600"
+          parameters: |
+            {
+              "GITHUB_PR_NUMBER": "${{ github.event.pull_request.number }}",
+              "GITHUB_REPO": "${{ github.repository }}",
+              "GITHUB_SHA": "${{ github.sha }}"
+            }
+
+      - name: Check Jenkins Result
+        if: steps.jenkins.outcome != 'success'
+        run: |
+          echo "Jenkins job failed or timed out"
+          exit 1
