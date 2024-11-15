@@ -1,116 +1,100 @@
 pipeline {
     agent any
     environment {
-        DOCKER_BUILDKIT = '1'
-        COMPOSE_DOCKER_CLI_BUILD = '1'
-        PRE_COMMIT_HOME = '/tmp/.pre-commit-cache'
-    }
-    options {
-        disableConcurrentBuilds()
+        CONTAINER_NAME_APP = 'django'
+        CONTAINER_NAME_DB = 'postgres'
+        ECS_CLUSTER = 'ecc-project-cluster'
+        ECS_SERVICE = 'ecc-project-service'
+        ECR_REPOSITORY_APP = 'ecc-project-django'
+        ECR_REPOSITORY_DB = 'ecc-project-postgres'
+        ECR_REGISTRY = "${params.AWS_ACCOUNT_ID}.dkr.ecr.eu-west-1.amazonaws.com"
+        IMAGE_TAG = 'latest'
     }
     stages {
-        stage('Checkout') {
+        stage('Terraform Apply') {
             steps {
-                checkout scm
-            }
-        }
-
-        stage('Run Linting and Build/Test in Parallel') {
-            parallel {
-                stage('Linting') {
-                    agent {
-                        docker {
-                            image 'python:3.12'
-                            reuseNode true
-                        }
-                    }
-                    steps {
-                        sh '''
-                        # Set pip to install packages in the workspace
-                        export PIP_USER=false
-                        export PYTHONUSERBASE=$WORKSPACE/.pip-packages
-
-                        # Install pre-commit
-                        pip install --user pre-commit
-
-                        # Add the local bin to PATH
-                        export PATH=$WORKSPACE/.pip-packages/bin:$PATH
-
-                        # Run your pre-commit commands here
-                        pre-commit run --all-files
-                        '''
-                        cleanWs patterns: [
-                            [pattern: '.pip-packages/**', type: 'INCLUDE'],
-                            [pattern: '.pre-commit-cache/**', type: 'INCLUDE']
-                        ]
-                    }
-                }
-
-                stage('Build and Test') {
-                    steps {
-                        script {
-                            withEnv([
-                                "POSTGRES_DB=${params.POSTGRES_DB}",
-                                "POSTGRES_USER=${params.POSTGRES_USER}",
-                                "POSTGRES_PASSWORD=${params.POSTGRES_PASSWORD}",
-                                "POSTGRES_HOST=${params.POSTGRES_HOST}"
-                            ]) {
-                                sh 'docker compose -f docker-compose.local.yml build django'
-                                sh 'docker compose -f docker-compose.docs.yml build docs'
-                                sh 'docker compose -f docker-compose.local.yml run --rm django python manage.py makemigrations --check'
-                                sh 'docker compose -f docker-compose.local.yml run --rm django python manage.py migrate'
-                                sh 'docker compose -f docker-compose.local.yml run django pytest'
-                            }
-                        }
-                    }
-                    post {
-                        always {
-                            sh 'docker compose -f docker-compose.local.yml down'
-                        }
-                    }
-                }
-
-                stage('Terraform') {
-                    steps {
-                        dir('terraform') {
-                            sh 'terraform fmt -check'
-                            sh 'terraform init'
-
-                            withEnv([
-                                "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
-                                "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}",
-                                "AWS_DEFAULT_REGION=${params.AWS_REGION}",
-                                "TF_VAR_postgres_db=${params.POSTGRES_DB}",
-                                "TF_VAR_postgres_user=${params.POSTGRES_USER}",
-                                "TF_VAR_postgres_password=${params.POSTGRES_PASSWORD}",
-                                "TF_VAR_postgres_host=${params.POSTGRES_HOST}"
-                            ]) {
-                                sh 'terraform plan -no-color -out=terraform.tfplan'
-                            }
-
-                            sh '''
-                                if [ ! -f terraform.tfplan ]; then
-                                    echo "Plan file not created, failing the job."
-                                    exit 1
-                                fi
-                            '''
-                        }
+                dir('terraform') {
+                    sh 'terraform fmt -check'
+                    sh 'terraform init'
+                    withEnv([
+                        "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
+                        "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}",
+                        "AWS_DEFAULT_REGION=${params.AWS_REGION}",
+                        "TF_VAR_postgres_db=${params.POSTGRES_DB}",
+                        "TF_VAR_postgres_user=${params.POSTGRES_USER}",
+                        "TF_VAR_postgres_password=${params.POSTGRES_PASSWORD}",
+                        "TF_VAR_postgres_host=${params.POSTGRES_HOST}"
+                    ]) {
+                        sh 'terraform plan -no-color'
+                        sh 'terraform apply -auto-approve'
                     }
                 }
             }
         }
 
-        stage('Cleanup') {
+        stage('AWS Deploy') {
             steps {
+                // Build and push django app
                 sh '''
-                    # Remove unused Docker images, containers, and volumes
-                    docker system prune -f --all --volumes
+                    docker compose -f docker-compose.local.yml build django
+                    docker tag ecc_project_local_django:latest ${ECR_REGISTRY}/${ECR_REPOSITORY_APP}:${IMAGE_TAG}
+                    docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_APP}:${IMAGE_TAG}
+                '''
+
+                // Build and push postgres
+                sh '''
+                    docker compose -f docker-compose.local.yml build postgres
+                    docker tag ecc_project_production_postgres:latest ${ECR_REGISTRY}/${ECR_REPOSITORY_DB}:${IMAGE_TAG}
+                    docker push ${ECR_REGISTRY}/${ECR_REPOSITORY_DB}:${IMAGE_TAG}
+                '''
+
+                // Download and update task definition
+                sh '''
+                    aws ecs describe-task-definition \
+                        --task-definition ecc-project-task-definition \
+                        --query 'taskDefinition' > task-definition.json
+                '''
+
+                // Update container image in task definition
+                sh '''
+                    jq '.containerDefinitions[1].image = "${ECR_REGISTRY}/${ECR_REPOSITORY_APP}:${IMAGE_TAG}"' task-definition.json > new-task-definition.json
+                '''
+
+                // Deploy to ECS
+                sh '''
+                    aws ecs register-task-definition \
+                        --cli-input-json file://new-task-definition.json
+
+                    aws ecs update-service \
+                        --cluster ${ECS_CLUSTER} \
+                        --service ${ECS_SERVICE} \
+                        --task-definition ecc-project-task-definition \
+                        --force-new-deployment
+
+                    aws ecs wait services-stable \
+                        --cluster ${ECS_CLUSTER} \
+                        --services ${ECS_SERVICE}
                 '''
             }
         }
     }
+
     post {
         always {
+            dir('terraform') {
+                withEnv([
+                    "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
+                    "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}",
+                    "AWS_DEFAULT_REGION=${params.AWS_REGION}",
+                    "TF_VAR_postgres_db=${params.POSTGRES_DB}",
+                    "TF_VAR_postgres_user=${params.POSTGRES_USER}",
+                    "TF_VAR_postgres_password=${params.POSTGRES_PASSWORD}",
+                    "TF_VAR_postgres_host=${params.POSTGRES_HOST}"
+                ]) {
+                    sh 'terraform init'
+                    sh 'terraform destroy -auto-approve'
+                }
+            }
             cleanWs()
         }
     }
