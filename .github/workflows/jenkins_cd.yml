@@ -1,14 +1,14 @@
-name: Trigger Jenkins CI
+name: Trigger Jenkins CD
 
 on:
-  pull_request:
-    branches: ['master', 'main']
+  push:
+    branches: [ main ]
 
 jobs:
   trigger-jenkins:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Jenkins CI
+      - name: Trigger Jenkins CD
         env:
           JENKINS_URL: ${{ secrets.JENKINS_URL }}
           JENKINS_USER: ${{ secrets.JENKINS_USER }}
@@ -16,11 +16,11 @@ jobs:
         run: |
           response=$(curl -X POST -L \
             --user "${JENKINS_USER}:${JENKINS_TOKEN}" \
-            "${JENKINS_URL}/job/ecc-project/buildWithParameters?token=${JENKINS_TOKEN}")
+            "${JENKINS_URL}/job/ecc-project-deploy/buildWithParameters?token=${JENKINS_TOKEN}")
 
           if [ $? -eq 0 ]; then
-            echo "Successfully triggered Jenkins CI"
+            echo "Successfully triggered Jenkins CD"
           else
-            echo "Failed to trigger Jenkins CI"
+            echo "Failed to trigger Jenkins CD"
             exit 1
           fi

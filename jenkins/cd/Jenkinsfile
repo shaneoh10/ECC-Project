@@ -1,39 +1,10 @@
 pipeline {
     agent any
 
-    parameters {
-        string(name: 'AWS_REGION', defaultValue: 'eu-west-1', description: 'AWS Region')
-        string(name: 'AWS_ACCOUNT_ID', description: 'AWS Account ID')
-        string(name: 'ECR_REGISTRY', description: 'ECR Registry URL')
-        string(name: 'POSTGRES_DB', description: 'PostgreSQL Database Name')
-        string(name: 'POSTGRES_USER', description: 'PostgreSQL Username')
-        string(name: 'POSTGRES_PASSWORD', description: 'PostgreSQL Password')
-        string(name: 'POSTGRES_HOST', description: 'PostgreSQL Host')
-    }
-
-    triggers {
-        githubPush()
-    }
-
-    environment {
-        AWS_REGION = "${params.AWS_REGION}"
-        AWS_ACCOUNT_ID = "${params.AWS_ACCOUNT_ID}"
-        ECR_REGISTRY = "${params.AWS_ACCOUNT_ID}.dkr.ecr.${params.AWS_REGION}.amazonaws.com"
-        AWS_CREDENTIALS = credentials('aws-credentials')
-        AWS_ACCESS_KEY_ID = "${AWS_CREDENTIALS_USR}"
-        AWS_SECRET_ACCESS_KEY = "${AWS_CREDENTIALS_PSW}"
-    }
-
     stages {
         stage('Terraform Apply') {
             steps {
                 build job: 'terraform-apply'
-            }
-        }
-
-        stage('AWS Deploy') {
-            steps {
-                build job: 'aws-deploy'
             }
         }
     }
@@ -41,7 +12,7 @@ pipeline {
     post {
         always {
             script {
-                // Run terraform-destroy job regardless of build result
+                // Ensures cleanup and execution of dependent destroy operations
                 build job: 'terraform-destroy'
                 cleanWs()
             }
