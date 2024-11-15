@@ -65,9 +65,14 @@ pipeline {
                             --query 'taskDefinition' > task-definition.json
                     '''
 
+                    /// Clean the task definition JSON
+                    sh '''
+                        jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' task-definition.json > cleaned-task-definition.json
+                    '''
+
                     // Update container image in task definition
                     sh '''
-                        jq '.containerDefinitions[1].image = "${ECR_REGISTRY}/${ECR_REPOSITORY_APP}:${IMAGE_TAG}"' task-definition.json > new-task-definition.json
+                        jq '.containerDefinitions[1].image = "${ECR_REGISTRY}/${ECR_REPOSITORY_APP}:${IMAGE_TAG}"' cleaned-task-definition.json > new-task-definition.json
                     '''
 
                     // Deploy to ECS
