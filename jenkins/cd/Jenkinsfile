@@ -73,7 +73,7 @@ pipeline {
                     // Update container image in task definition
                     sh '''
                         jq --arg imageUri "${ECR_REGISTRY}/${ECR_REPOSITORY_APP}:${IMAGE_TAG}" \
-                            .containerDefinitions[1].image = $imageUri cleaned-task-definition.json > new-task-definition.json
+                        '.containerDefinitions[1].image = $imageUri' cleaned-task-definition.json > new-task-definition.json
                     '''
 
                     // Deploy to ECS
