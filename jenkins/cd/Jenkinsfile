@@ -1,21 +1,75 @@
 pipeline {
     agent any
-
     stages {
         stage('Terraform Apply') {
             steps {
-                build job: 'terraform-apply'
+                dir('terraform') {
+                    sh 'terraform fmt -check'
+                    sh 'terraform init'
+                    withEnv([
+                        "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
+                        "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}",
+                        "AWS_DEFAULT_REGION=${params.AWS_REGION}",
+                        "TF_VAR_postgres_db=${params.POSTGRES_DB}",
+                        "TF_VAR_postgres_user=${params.POSTGRES_USER}",
+                        "TF_VAR_postgres_password=${params.POSTGRES_PASSWORD}",
+                        "TF_VAR_postgres_host=${params.POSTGRES_HOST}"
+                    ]) {
+                        sh 'terraform plan -no-color -out=terraform.tfplan'
+                    }
+                    sh '''
+                        if [ ! -f terraform.tfplan ]; then
+                            echo "Plan file not created, failing the job."
+                            exit 1
+                        fi
+                    '''
+                }
+            }
+        }
+        stage('AWS Deploy') {
+            steps {
+                dir('terraform') {
+                    sh 'terraform fmt -check'
+                    sh 'terraform init'
+                    withEnv([
+                        "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
+                        "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}",
+                        "AWS_DEFAULT_REGION=${params.AWS_REGION}",
+                        "TF_VAR_postgres_db=${params.POSTGRES_DB}",
+                        "TF_VAR_postgres_user=${params.POSTGRES_USER}",
+                        "TF_VAR_postgres_password=${params.POSTGRES_PASSWORD}",
+                        "TF_VAR_postgres_host=${params.POSTGRES_HOST}"
+                    ]) {
+                        sh 'terraform plan -no-color -out=terraform.tfplan'
+                    }
+                    sh '''
+                        if [ ! -f terraform.tfplan ]; then
+                            echo "Plan file not created, failing the job."
+                            exit 1
+                        fi
+                    '''
+                }
             }
         }
     }
 
     post {
         always {
-            script {
-                // Ensures cleanup and execution of dependent destroy operations
-                build job: 'terraform-destroy'
-                cleanWs()
+            dir('terraform') {
+                withEnv([
+                    "AWS_ACCESS_KEY_ID=${params.AWS_ACCESS_KEY_ID}",
+                    "AWS_SECRET_ACCESS_KEY=${params.AWS_SECRET_ACCESS_KEY}",
+                    "AWS_DEFAULT_REGION=${params.AWS_REGION}",
+                    "TF_VAR_postgres_db=${params.POSTGRES_DB}",
+                    "TF_VAR_postgres_user=${params.POSTGRES_USER}",
+                    "TF_VAR_postgres_password=${params.POSTGRES_PASSWORD}",
+                    "TF_VAR_postgres_host=${params.POSTGRES_HOST}"
+                ]) {
+                    sh 'terraform init'
+                    sh 'terraform destroy -auto-approve'
+                }
             }
+            cleanWs()
         }
     }
 }
