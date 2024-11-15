@@ -1,14 +1,14 @@
 pipeline {
     agent any
     environment {
-        CONTAINER_NAME_APP = 'django'
-        CONTAINER_NAME_DB = 'postgres'
-        ECS_CLUSTER = 'ecc-project-cluster'
-        ECS_SERVICE = 'ecc-project-service'
-        ECR_REPOSITORY_APP = 'ecc-project-django'
-        ECR_REPOSITORY_DB = 'ecc-project-postgres'
-        ECR_REGISTRY = '${params.AWS_ACCOUNT_ID}.dkr.ecr.eu-west-1.amazonaws.com'
-        IMAGE_TAG = 'latest'
+        CONTAINER_NAME_APP = "django"
+        CONTAINER_NAME_DB = "postgres"
+        ECS_CLUSTER = "ecc-project-cluster"
+        ECS_SERVICE = "ecc-project-service"
+        ECR_REPOSITORY_APP = "ecc-project-django"
+        ECR_REPOSITORY_DB = "ecc-project-postgres"
+        ECR_REGISTRY = "${params.AWS_ACCOUNT_ID}.dkr.ecr.eu-west-1.amazonaws.com"
+        IMAGE_TAG = "latest"
     }
     stages {
         stage('Terraform Apply') {
