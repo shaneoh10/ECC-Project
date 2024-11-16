@@ -14,13 +14,25 @@ jobs:
           JENKINS_USER: ${{ secrets.JENKINS_USER }}
           JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
         run: |
+          echo "Fetching Jenkins CSRF crumb..."
+          crumb=$(curl -u "${JENKINS_USER}:${JENKINS_TOKEN}" \
+            "${JENKINS_URL}/crumbIssuer/api/json" | jq -r '.crumb')
+
+          if [ -z "$crumb" ]; then
+            echo "Failed to retrieve CSRF crumb from Jenkins."
+            exit 1
+          fi
+
+          echo "Triggering Jenkins job..."
           response=$(curl -X POST -L \
             --user "${JENKINS_USER}:${JENKINS_TOKEN}" \
+            -H "Jenkins-Crumb:${crumb}" \
+            --write-out "%{http_code}" --silent --output /dev/null \
             "${JENKINS_URL}/job/ecc-project/buildWithParameters?token=${JENKINS_TOKEN}")
 
-          if [ $? -eq 0 ]; then
+          if [ "$response" -eq 200 ] || [ "$response" -eq 201 ]; then
             echo "Successfully triggered Jenkins CI"
           else
-            echo "Failed to trigger Jenkins CI"
+            echo "Failed to trigger Jenkins CI with response code: $response"
             exit 1
           fi
