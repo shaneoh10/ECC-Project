@@ -22,25 +22,48 @@ pipeline {
                         docker {
                             image 'python:3.12'
                             reuseNode true
+                            args '-v ${WORKSPACE}:${WORKSPACE}'
                         }
                     }
                     steps {
-                        sh '''
-                        # Set pip to install packages in the workspace
-                        export PIP_USER=false
-                        export PYTHONUSERBASE=$WORKSPACE/.pip-packages
+                        sh '''#!/bin/bash
+                            # Exit on error
+                            set -e
 
-                        # Install pre-commit
-                        pip install --user pre-commit
+                            # Print commands for debugging
+                            set -x
 
-                        # Add the local bin to PATH
-                        export PATH=$WORKSPACE/.pip-packages/bin:$PATH
+                            # Ensure we're in the workspace
+                            cd ${WORKSPACE}
 
-                        # Run your pre-commit commands here
-                        pre-commit run --all-files
+                            # Create virtual environment
+                            python -m venv .venv
+                            source .venv/bin/activate
+
+                            # Upgrade pip to avoid warnings
+                            pip install --upgrade pip
+
+                            # Install pre-commit in the virtual environment
+                            pip install pre-commit
+
+                            # Verify pre-commit installation
+                            which pre-commit
+
+                            # Initialize pre-commit if .pre-commit-config.yaml exists
+                            if [ -f .pre-commit-config.yaml ]; then
+                                pre-commit install
+                            else
+                                echo "Warning: .pre-commit-config.yaml not found"
+                                exit 1
+                            fi
+
+                            # Run pre-commit
+                            pre-commit run --all-files
                         '''
+
+                        // Clean up afterwards
                         cleanWs patterns: [
-                            [pattern: '.pip-packages/**', type: 'INCLUDE'],
+                            [pattern: '.venv/**', type: 'INCLUDE'],
                             [pattern: '.pre-commit-cache/**', type: 'INCLUDE']
                         ]
                     }
