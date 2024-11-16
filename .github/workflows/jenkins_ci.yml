@@ -1,0 +1,26 @@
+name: Trigger Jenkins CI
+
+on:
+  pull_request:
+    branches: ['master', 'main']
+
+jobs:
+  trigger-jenkins:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Jenkins CI
+        env:
+          JENKINS_URL: ${{ secrets.JENKINS_URL }}
+          JENKINS_USER: ${{ secrets.JENKINS_USER }}
+          JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
+        run: |
+          response=$(curl -X POST -L \
+            --user "${JENKINS_USER}:${JENKINS_TOKEN}" \
+            "${JENKINS_URL}/job/ecc-project/buildWithParameters?token=${JENKINS_TOKEN}")
+
+          if [ $? -eq 0 ]; then
+            echo "Successfully triggered Jenkins CI"
+          else
+            echo "Failed to trigger Jenkins CI"
+            exit 1
+          fi
