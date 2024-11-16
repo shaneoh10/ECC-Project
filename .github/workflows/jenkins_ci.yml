@@ -14,7 +14,7 @@ jobs:
           JENKINS_USER: ${{ secrets.JENKINS_USER }}
           JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
         run: |
-          echo "Triggering Jenkins job..."
+          echo "Triggering Jenkins CI..."
           response=$(curl -X POST -L \
             --user "${JENKINS_USER}:${JENKINS_TOKEN}" \
             --write-out "%{http_code}" --silent --output /dev/null \
