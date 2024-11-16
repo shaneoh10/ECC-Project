@@ -17,7 +17,6 @@ jobs:
           echo "Triggering Jenkins job..."
           response=$(curl -X POST -L \
             --user "${JENKINS_USER}:${JENKINS_TOKEN}" \
-            -H "Jenkins-Crumb:${crumb}" \
             --write-out "%{http_code}" --silent --output /dev/null \
             "${JENKINS_URL}/job/ecc-project/buildWithParameters?token=${JENKINS_TOKEN}")
 
