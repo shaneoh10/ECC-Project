@@ -14,13 +14,39 @@ jobs:
           JENKINS_USER: ${{ secrets.JENKINS_USER }}
           JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
         run: |
-          response=$(curl -X POST -L \
-            --user "${JENKINS_USER}:${JENKINS_TOKEN}" \
-            "${JENKINS_URL}/job/ecc-project-deploy/buildWithParameters?token=${JENKINS_TOKEN}")
+          # Print URL for debugging
+          echo "Attempting to trigger: ${JENKINS_URL}/job/ecc-project-deploy/buildWithParameters"
 
-          if [ $? -eq 0 ]; then
-            echo "Successfully triggered Jenkins CD"
+          # Add verbose output to curl
+          response=$(curl -v -X POST -L \
+            --user "${JENKINS_USER}:${JENKINS_TOKEN}" \
+            "${JENKINS_URL}/job/ecc-project-deploy/buildWithParameters?token=${JENKINS_TOKEN}" 2>&1)
+
+          # Store curl exit code
+          curl_exit_code=$?
+
+          # Print response (be careful not to expose sensitive info)
+          echo "Curl exit code: ${curl_exit_code}"
+          echo "Response (filtered):"
+          echo "${response}" | grep -v "Authorization:"
+
+          if [ $curl_exit_code -eq 0 ]; then
+            # Check if response contains specific error messages
+            if echo "${response}" | grep -q "Authentication failed" || echo "${response}" | grep -q "Invalid token"; then
+              echo "Authentication failed. Please verify JENKINS_USER and JENKINS_TOKEN"
+              exit 1
+            elif echo "${response}" | grep -q "404"; then
+              echo "Jenkins job not found. Please verify the job URL"
+              exit 1
+            elif echo "${response}" | grep -q "403"; then
+              echo "Permission denied. Please verify user permissions"
+              exit 1
+            else
+              echo "Successfully triggered Jenkins CD"
+            fi
           else
             echo "Failed to trigger Jenkins CD"
+            echo "Curl error details:"
+            echo "${response}"
             exit 1
           fi
