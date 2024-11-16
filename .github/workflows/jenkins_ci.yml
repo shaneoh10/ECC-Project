@@ -15,11 +15,16 @@ jobs:
           JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
         run: |
           echo "Fetching Jenkins CSRF crumb..."
-          crumb=$(curl -u "${JENKINS_USER}:${JENKINS_TOKEN}" \
-            "${JENKINS_URL}/crumbIssuer/api/json" | jq -r '.crumb')
+          response=$(curl -u "${JENKINS_USER}:${JENKINS_TOKEN}" \
+            "${JENKINS_URL}/crumbIssuer/api/json")
+
+          echo "Raw response from crumbIssuer: $response"
+
+          crumb=$(echo "$response" | jq -r '.crumb' 2>/dev/null)
 
           if [ -z "$crumb" ]; then
-            echo "Failed to retrieve CSRF crumb from Jenkins."
+            echo "Failed to retrieve valid CSRF crumb. Response was:"
+            echo "$response"
             exit 1
           fi
 
