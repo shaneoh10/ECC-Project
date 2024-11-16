@@ -14,13 +14,15 @@ jobs:
           JENKINS_USER: ${{ secrets.JENKINS_USER }}
           JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
         run: |
+          echo "Triggering Jenkins CI..."
           response=$(curl -X POST -L \
             --user "${JENKINS_USER}:${JENKINS_TOKEN}" \
+            --write-out "%{http_code}" --silent --output /dev/null \
             "${JENKINS_URL}/job/ecc-project/buildWithParameters?token=${JENKINS_TOKEN}")
 
-          if [ $? -eq 0 ]; then
+          if [ "$response" -eq 200 ] || [ "$response" -eq 201 ]; then
             echo "Successfully triggered Jenkins CI"
           else
-            echo "Failed to trigger Jenkins CI"
+            echo "Failed to trigger Jenkins CI with response code: $response"
             exit 1
           fi
