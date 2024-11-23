@@ -18,12 +18,6 @@ pipeline {
         stage('Run Linting and Build/Test in Parallel') {
             parallel {
                 stage('Linting') {
-                    agent {
-                        docker {
-                            image 'python:3.12'
-                            reuseNode true
-                        }
-                    }
                     steps {
                         sh '''#!/bin/bash
                             # Exit on error
@@ -34,32 +28,19 @@ pipeline {
                             # Ensure we're in the workspace
                             cd ${WORKSPACE}
 
-                            # Unset Git hooks path if it exists
-                            git config --unset-all core.hooksPath || true
-
                             # Create virtual environment
                             python -m venv .venv
                             source .venv/bin/activate
 
-                            # Create a pip config directory owned by the current user
-                            export PIP_CACHE_DIR="${WORKSPACE}/.pip-cache"
-                            mkdir -p "${PIP_CACHE_DIR}"
-
-                            # Upgrade pip to avoid warnings
+                            # Upgrade pip
                             pip install --upgrade pip
 
-                            # Install pre-commit in the virtual environment
+                            # Install pre-commit
                             pip install pre-commit
-
-                            # Verify pre-commit installation
-                            which pre-commit
 
                             # Initialize pre-commit if .pre-commit-config.yaml exists
                             if [ -f .pre-commit-config.yaml ]; then
-                                # Force pre-commit to install hooks
-                                pre-commit install -f
-
-                                # Run pre-commit
+                                pre-commit install
                                 pre-commit run --all-files
                             else
                                 echo "Warning: .pre-commit-config.yaml not found"
@@ -69,8 +50,7 @@ pipeline {
                         // Clean up afterwards
                         cleanWs patterns: [
                             [pattern: '.venv/**', type: 'INCLUDE'],
-                            [pattern: '.pre-commit-cache/**', type: 'INCLUDE'],
-                            [pattern: '.pip-cache/**', type: 'INCLUDE']
+                            [pattern: '.pre-commit-cache/**', type: 'INCLUDE']
                         ]
                     }
                 }
