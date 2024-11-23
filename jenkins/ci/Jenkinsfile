@@ -28,16 +28,22 @@ pipeline {
                         sh '''#!/bin/bash
                             # Exit on error
                             set -e
-
                             # Print commands for debugging
                             set -x
 
                             # Ensure we're in the workspace
                             cd ${WORKSPACE}
 
+                            # Unset Git hooks path if it exists
+                            git config --unset-all core.hooksPath || true
+
                             # Create virtual environment
                             python -m venv .venv
                             source .venv/bin/activate
+
+                            # Create a pip config directory owned by the current user
+                            export PIP_CACHE_DIR="${WORKSPACE}/.pip-cache"
+                            mkdir -p "${PIP_CACHE_DIR}"
 
                             # Upgrade pip to avoid warnings
                             pip install --upgrade pip
@@ -50,20 +56,21 @@ pipeline {
 
                             # Initialize pre-commit if .pre-commit-config.yaml exists
                             if [ -f .pre-commit-config.yaml ]; then
-                                pre-commit install
+                                # Force pre-commit to install hooks
+                                pre-commit install -f
+
+                                # Run pre-commit
+                                pre-commit run --all-files
                             else
                                 echo "Warning: .pre-commit-config.yaml not found"
                                 exit 1
                             fi
-
-                            # Run pre-commit
-                            pre-commit run --all-files
                         '''
-
                         // Clean up afterwards
                         cleanWs patterns: [
                             [pattern: '.venv/**', type: 'INCLUDE'],
-                            [pattern: '.pre-commit-cache/**', type: 'INCLUDE']
+                            [pattern: '.pre-commit-cache/**', type: 'INCLUDE'],
+                            [pattern: '.pip-cache/**', type: 'INCLUDE']
                         ]
                     }
                 }
