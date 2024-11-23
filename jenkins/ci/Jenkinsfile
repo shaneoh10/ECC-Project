@@ -125,12 +125,17 @@ pipeline {
             }
         }
 
-        stage('Cleanup') {
-            steps {
-                sh '''
-                    # Remove unused Docker images, containers, and volumes
-                    docker system prune -f --all --volumes
-                '''
+        post {
+            always {
+                stage('Cleanup') {
+                    steps {
+                        cleanWs()
+                        sh '''
+                            # Remove unused Docker images, containers, and volumes
+                            docker system prune -f --all --volumes
+                        '''
+                    }
+                }
             }
         }
     }
