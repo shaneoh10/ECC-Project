@@ -22,7 +22,6 @@ pipeline {
                         docker {
                             image 'python:3.12'
                             reuseNode true
-                            args '-v ${WORKSPACE}:${WORKSPACE}'
                         }
                     }
                     steps {
