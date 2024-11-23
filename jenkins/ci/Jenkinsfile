@@ -40,6 +40,7 @@ pipeline {
 
                             # Initialize pre-commit if .pre-commit-config.yaml exists
                             if [ -f .pre-commit-config.yaml ]; then
+                                git config --unset-all core.hooksPath
                                 pre-commit install
                                 pre-commit run --all-files
                             else
