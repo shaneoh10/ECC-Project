@@ -68,13 +68,13 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-      - name: Set up Cloud SDK
+      - name: Set up Google Cloud SDK
         uses: 'google-github-actions/setup-gcloud@v2'
         with:
           version: '>= 502.0.0'
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      - name: Setup Terraform
+      - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.7
