@@ -18,7 +18,7 @@ env:
 jobs:
   terraform_apply:
     name: Terraform Apply
-    uses: ./.github/workflows/terraform_apply.yml
+    uses: ./.github/workflows/terraform_aws_apply.yml
     secrets: inherit
 
   aws_deploy:
@@ -31,5 +31,5 @@ jobs:
     name: Terraform Destroy
     needs: aws_deploy
     if: ${{ always() }}
-    uses: ./.github/workflows/terraform_destroy.yml
+    uses: ./.github/workflows/terraform_aws_destroy.yml
     secrets: inherit

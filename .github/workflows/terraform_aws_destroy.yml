@@ -35,15 +35,19 @@ jobs:
 
       - name: Terraform Format
         id: fmt
+        working-directory: terraform/aws
         run: terraform fmt -check
 
       - name: Terraform Init
         id: init
+        working-directory: terraform/aws
         run: terraform init
 
       - name: Terraform Plan Destroy
         id: plan
+        working-directory: terraform/aws
         run: terraform plan -destroy -no-color
 
       - name: Terraform Destroy
+        working-directory: terraform/aws
         run: terraform destroy -auto-approve
