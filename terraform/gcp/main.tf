@@ -1,28 +1,27 @@
 terraform {
-  backend "s3" {
-    bucket         = "ecc-project-tf-state-backend"
-    key            = "tf-infra/terraform.tfstate"
-    region         = "eu-west-1"
-    dynamodb_table = "ecc-project-tf-state-locking"
-    encrypt        = true
+  backend "gcs" {
+    bucket = "ecc-project-tf-state-backend"
+    prefix = "tf-infra/terraform.tfstate"
   }
 
   required_version = ">= 1.9.7"
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
+    google = {
+      source  = "hashicorp/google"
       version = "~> 5.0"
     }
   }
 }
 
-provider "aws" {
-  region = var.region
+provider "google" {
+  project = var.project_id
+  region  = var.region
 }
 
-module "ecs" {
-  source            = "./modules/ecs"
-  project_name      = var.project_name
+module "cloudrun" {
+  source = "./modules/cloudrun"
+
+  project_id        = var.project_id
   region            = var.region
   postgres_db       = var.postgres_db
   postgres_host     = var.postgres_host
@@ -30,14 +29,16 @@ module "ecs" {
   postgres_password = var.postgres_password
 }
 
-module "ecr" {
-  source       = "./modules/ecr"
-  project_name = var.project_name
-  region       = var.region
+module "artifact" {
+  source = "./modules/artifact"
+
+  project_id = var.project_id
+  region     = var.region
 }
 
 module "vpc" {
-  source       = "./modules/vpc"
-  project_name = var.project_name
-  region       = var.region
+  source = "./modules/vpc"
+
+  project_id = var.project_id
+  region     = var.region
 }

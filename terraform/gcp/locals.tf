@@ -1,4 +1,4 @@
 locals {
-  project_name = "ecc-project"
-  region       = "eu-west-1"
+  project_id = "ecc-project-443018"
+  region     = "europe-west1"
 }

@@ -22,16 +22,16 @@ variable "postgres_host" {
   sensitive   = true
 }
 
-variable "project_name" {
-  description = "Name of the project to be used in resource naming"
+variable "project_id" {
+  description = "ID of the project to be used"
   type        = string
-  default     = "ecc-project"
+  default     = "ecc-project-443018"
 }
 
 variable "region" {
-  description = "AWS region"
+  description = "GCP region"
   type        = string
-  default     = "eu-west-1"
+  default     = "europe-west1"
 }
 
 variable "bucket_name" {

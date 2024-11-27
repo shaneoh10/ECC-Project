@@ -1,202 +1,116 @@
-# VPC
-resource "aws_vpc" "vpc" {
-  cidr_block           = "10.0.0.0/16"
-  instance_tenancy     = "default"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-
-  tags = {
-    Name = "${var.project_name}-vpc"
-  }
+# VPC Network
+resource "google_compute_network" "vpc" {
+  name                    = "${var.project_id}-vpc"
+  auto_create_subnetworks = false
+  routing_mode            = "REGIONAL"
 }
 
 # Public Subnets
-resource "aws_subnet" "sn1" {
-  cidr_block              = "10.0.1.0/24"
-  vpc_id                  = aws_vpc.vpc.id
-  availability_zone       = "${var.region}a"
-  map_public_ip_on_launch = true
+resource "google_compute_subnetwork" "sn1" {
+  name          = "${var.project_id}-public-1"
+  ip_cidr_range = "10.0.1.0/24"
+  region        = var.region
+  network       = google_compute_network.vpc.id
 
-  tags = {
-    Name = "${var.project_name}-public-1a"
-  }
+  private_ip_google_access = true
 }
 
-resource "aws_subnet" "sn2" {
-  cidr_block              = "10.0.2.0/24"
-  vpc_id                  = aws_vpc.vpc.id
-  availability_zone       = "${var.region}b"
-  map_public_ip_on_launch = true
+resource "google_compute_subnetwork" "sn2" {
+  name          = "${var.project_id}-public-2"
+  ip_cidr_range = "10.0.2.0/24"
+  region        = var.region
+  network       = google_compute_network.vpc.id
 
-  tags = {
-    Name = "${var.project_name}-public-1b"
-  }
+  private_ip_google_access = true
 }
 
 # Private Subnets
-resource "aws_subnet" "private_sn1" {
-  cidr_block              = "10.0.3.0/24"
-  vpc_id                  = aws_vpc.vpc.id
-  availability_zone       = "${var.region}a"
-  map_public_ip_on_launch = false
+resource "google_compute_subnetwork" "private_sn1" {
+  name          = "${var.project_id}-private-1"
+  ip_cidr_range = "10.0.3.0/24"
+  region        = var.region
+  network       = google_compute_network.vpc.id
 
-  tags = {
-    Name = "${var.project_name}-private-1a"
-  }
+  private_ip_google_access = false
 }
 
-resource "aws_subnet" "private_sn2" {
-  cidr_block              = "10.0.4.0/24"
-  vpc_id                  = aws_vpc.vpc.id
-  availability_zone       = "${var.region}b"
-  map_public_ip_on_launch = false
+resource "google_compute_subnetwork" "private_sn2" {
+  name          = "${var.project_id}-private-2"
+  ip_cidr_range = "10.0.4.0/24"
+  region        = var.region
+  network       = google_compute_network.vpc.id
 
-  tags = {
-    Name = "${var.project_name}-private-1b"
-  }
+  private_ip_google_access = false
 }
 
-# Internet Gateway
-resource "aws_internet_gateway" "gw" {
-  vpc_id = aws_vpc.vpc.id
-
-  tags = {
-    Name = "${var.project_name}-igw"
-  }
+# Cloud Router (equivalent to NAT Gateway functionality)
+resource "google_compute_router" "router" {
+  name    = "${var.project_id}-router"
+  region  = var.region
+  network = google_compute_network.vpc.id
 }
 
-# Public Route Table
-resource "aws_route_table" "public_rt" {
-  vpc_id = aws_vpc.vpc.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.gw.id
-  }
-
-  tags = {
-    Name = "${var.project_name}-public-rt"
-  }
+# Cloud NAT
+resource "google_compute_router_nat" "nat" {
+  name                               = "${var.project_id}-nat"
+  router                             = google_compute_router.router.name
+  region                             = var.region
+  nat_ip_allocate_option             = "AUTO_ONLY"
+  source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
 }
 
-# Private Route Table
-resource "aws_route_table" "private_rt" {
-  vpc_id = aws_vpc.vpc.id
+# Firewall Rules (replacing Security Groups)
+# ALB Firewall Rule
+resource "google_compute_firewall" "alb_fw" {
+  name    = "${var.project_id}-alb-fw"
+  network = google_compute_network.vpc.id
 
-  tags = {
-    Name = "${var.project_name}-private-rt"
+  allow {
+    protocol = "tcp"
+    ports    = ["80", "443"]
   }
+
+  source_ranges = ["0.0.0.0/0"]
+  target_tags   = ["alb"]
 }
 
-# Public Route Table Associations
-resource "aws_route_table_association" "public_route1" {
-  route_table_id = aws_route_table.public_rt.id
-  subnet_id      = aws_subnet.sn1.id
+# App Firewall Rule (incoming traffic to app)
+resource "google_compute_firewall" "app_fw" {
+  name    = "${var.project_id}-app-fw"
+  network = google_compute_network.vpc.id
+
+  allow {
+    protocol = "tcp"
+    ports    = ["8000"]
+  }
+
+  source_tags = ["alb"]
+  target_tags = ["app"]
 }
 
-resource "aws_route_table_association" "public_route2" {
-  route_table_id = aws_route_table.public_rt.id
-  subnet_id      = aws_subnet.sn2.id
+# Database Firewall Rule
+resource "google_compute_firewall" "db_fw" {
+  name    = "${var.project_id}-db-fw"
+  network = google_compute_network.vpc.id
+
+  allow {
+    protocol = "tcp"
+    ports    = ["5432"]
+  }
+
+  source_tags = ["app"]
+  target_tags = ["db"]
 }
 
-# Private Route Table Associations
-resource "aws_route_table_association" "private_route1" {
-  route_table_id = aws_route_table.private_rt.id
-  subnet_id      = aws_subnet.private_sn1.id
-}
+# Egress Firewall Rule (Allow all outbound)
+resource "google_compute_firewall" "egress_fw" {
+  name      = "${var.project_id}-egress-fw"
+  network   = google_compute_network.vpc.id
+  direction = "EGRESS"
 
-resource "aws_route_table_association" "private_route2" {
-  route_table_id = aws_route_table.private_rt.id
-  subnet_id      = aws_subnet.private_sn2.id
-}
-
-# ALB Security Group
-resource "aws_security_group" "alb_sg" {
-  name        = "alb_sg"
-  description = "Security group for Application Load Balancer"
-  vpc_id      = aws_vpc.vpc.id
-
-  ingress {
-    description = "HTTP from internet"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+  allow {
+    protocol = "all"
   }
 
-  ingress {
-    description = "HTTPS from internet"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    description = "Allow all outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "alb_sg"
-  }
-}
-
-# App Security Group (ECS Tasks in private subnet)
-resource "aws_security_group" "app_sg" {
-  name        = "app_sg"
-  description = "Security group for ECS tasks"
-  vpc_id      = aws_vpc.vpc.id
-
-  # Allow traffic from ALB
-  ingress {
-    description     = "Allow ALB traffic to Django"
-    from_port       = 8000
-    to_port         = 8000
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb_sg.id]
-  }
-
-  # Allow outbound internet access (via NAT Gateway)
-  egress {
-    description = "Allow all outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "app_sg"
-  }
-}
-
-# PostgreSQL Security Group (in private subnet)
-resource "aws_security_group" "db_sg" {
-  name        = "db_sg"
-  description = "Security group for PostgreSQL"
-  vpc_id      = aws_vpc.vpc.id
-
-  ingress {
-    description     = "Allow traffic from ECS app tasks to PostgreSQL"
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_security_group.app_sg.id]
-  }
-
-  egress {
-    description = "Allow all outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "db_sg"
-  }
+  destination_ranges = ["0.0.0.0/0"]
 }

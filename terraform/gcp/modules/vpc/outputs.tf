@@ -1,39 +1,49 @@
 output "vpc_id" {
-  description = "The ID of the VPC"
-  value       = aws_vpc.vpc.id
+  description = "The ID of the VPC network"
+  value       = google_compute_network.vpc.id
 }
 
 output "public_subnet_1_id" {
   description = "The ID of the first public subnet"
-  value       = aws_subnet.sn1.id
+  value       = google_compute_subnetwork.sn1.id
 }
 
 output "public_subnet_2_id" {
   description = "The ID of the second public subnet"
-  value       = aws_subnet.sn2.id
+  value       = google_compute_subnetwork.sn2.id
 }
 
 output "private_subnet_1_id" {
   description = "The ID of the first private subnet"
-  value       = aws_subnet.private_sn1.id
+  value       = google_compute_subnetwork.private_sn1.id
 }
 
 output "private_subnet_2_id" {
   description = "The ID of the second private subnet"
-  value       = aws_subnet.private_sn2.id
+  value       = google_compute_subnetwork.private_sn2.id
 }
 
-output "alb_sg_id" {
-  description = "The ID of the ALB security group"
-  value       = aws_security_group.alb_sg.id
+output "alb_firewall_rule_id" {
+  description = "The ID of the ALB firewall rule"
+  value       = google_compute_firewall.alb_fw.id
 }
 
-output "app_sg_id" {
-  description = "The ID of the ECS application security group"
-  value       = aws_security_group.app_sg.id
+output "app_firewall_rule_id" {
+  description = "The ID of the application firewall rule"
+  value       = google_compute_firewall.app_fw.id
 }
 
-output "db_sg_id" {
-  description = "The ID of the PostgreSQL database security group"
-  value       = aws_security_group.db_sg.id
+output "db_firewall_rule_id" {
+  description = "The ID of the database firewall rule"
+  value       = google_compute_firewall.db_fw.id
+}
+
+output "cloud_router_id" {
+  description = "The ID of the Cloud Router"
+  value       = google_compute_router.router.id
+}
+
+output "cloud_nat_id" {
+  description = "The ID of the Cloud NAT"
+  value       = google_compute_router_nat.nat.id
 }
