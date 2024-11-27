@@ -77,14 +77,17 @@ jobs:
           terraform_wrapper: false
 
       - name: Terraform Format Check
+        working-directory: terraform/gcp
         run: |
           terraform fmt -check
 
       - name: Terraform Init
+        working-directory: terraform/gcp
         run: |
           terraform init
 
       - name: Terraform Plan
+        working-directory: terraform/gcp
         env:
           TF_VAR_postgres_db: ${{ secrets.POSTGRES_DB }}
           TF_VAR_postgres_user: ${{ secrets.POSTGRES_USER }}
@@ -94,6 +97,7 @@ jobs:
           terraform plan -no-color -out=terraform.tfplan
 
       - name: Validate Plan Output
+        working-directory: terraform/gcp
         run: |
           if [ ! -f terraform.tfplan ]; then
             echo "Plan file not created, failing the job."
