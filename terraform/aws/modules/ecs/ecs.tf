@@ -99,15 +99,15 @@ resource "aws_ecs_task_definition" "td" {
       environment = [
         {
           name  = "POSTGRES_USER"
-          value = "MJqVvAyWWVYAqSEdevWlSiwLbLIAjkKA"
+          value = var.postgres_user
         },
         {
           name  = "POSTGRES_PASSWORD"
-          value = "3ZoSNXGdkg5NQZf4VNKh2Qj43iPOlUqfj2tJfHTbId4rM3YkU2ejU2Ata60bNF0U"
+          value = var.postgres_password
         },
         {
           name  = "POSTGRES_DB"
-          value = "ecc_project"
+          value = var.postgres_db
         }
       ]
       healthCheck = {
