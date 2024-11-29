@@ -47,7 +47,7 @@ resource "google_cloud_run_service" "django" {
   template {
     spec {
       containers {
-        image = "${var.region}-docker.pkg.dev/${var.project_id}/${var.project_id}-django/django:latest"
+        image = "gcr.io/google-samples/hello-app:1.0"
         ports {
           container_port = var.app_port
         }
@@ -146,8 +146,6 @@ resource "google_compute_backend_service" "django_backend" {
   backend {
     group = google_compute_region_network_endpoint_group.django_neg.id
   }
-
-  health_checks = [google_compute_health_check.django_hc.id]
 }
 
 resource "google_compute_region_network_endpoint_group" "django_neg" {
