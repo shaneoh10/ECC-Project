@@ -4,9 +4,8 @@ resource "google_artifact_registry_repository" "repo_django" {
   location      = var.region
   format        = "DOCKER"
   project       = var.project_id
-
   labels = {
-    image_tag_mutability = "MUTABLE"
+    image-tag-mutability = "mutable"
   }
 }
 
@@ -16,8 +15,7 @@ resource "google_artifact_registry_repository" "repo_postgres" {
   location      = var.region
   format        = "DOCKER"
   project       = var.project_id
-
   labels = {
-    image_tag_mutability = "MUTABLE"
+    image-tag-mutability = "mutable"
   }
 }
