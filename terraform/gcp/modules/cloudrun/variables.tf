@@ -43,3 +43,9 @@ variable postgres_host {
   type        = string
   sensitive   = true
 }
+
+variable vpc_id {
+  description = "VPC ID"
+  type        = string
+  sensitive   = true
+}

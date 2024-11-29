@@ -1,9 +1,3 @@
-module "vpc" {
-  source     = "../vpc"
-  project_id = var.project_id
-  region     = var.region
-}
-
 # Cloud Run Service for PostgreSQL
 resource "google_cloud_run_service" "postgres" {
   name     = "${var.project_id}-postgres"
@@ -115,9 +109,9 @@ resource "google_cloud_run_service" "django" {
 
 # VPC Access Connector for Cloud Run
 resource "google_vpc_access_connector" "connector" {
-  name          = "${var.project_id}-connector"
+  name          = "${var.project_id}"
   region        = var.region
-  network       = module.vpc.vpc_id
+  network       = var.vpc_id
   ip_cidr_range = "10.8.0.0/28"
 }
 

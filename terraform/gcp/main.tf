@@ -18,6 +18,13 @@ provider "google" {
   region  = var.region
 }
 
+module "vpc" {
+  source = "./modules/vpc"
+
+  project_id = var.project_id
+  region     = var.region
+}
+
 module "cloudrun" {
   source = "./modules/cloudrun"
 
@@ -27,17 +34,11 @@ module "cloudrun" {
   postgres_host     = var.postgres_host
   postgres_user     = var.postgres_user
   postgres_password = var.postgres_password
+  vpc_id            = module.vpc.vpc_id
 }
 
 module "artifact" {
   source = "./modules/artifact"
-
-  project_id = var.project_id
-  region     = var.region
-}
-
-module "vpc" {
-  source = "./modules/vpc"
 
   project_id = var.project_id
   region     = var.region
