@@ -61,13 +61,10 @@ jobs:
           --region ${{ env.GCP_REGION }} \
           --project ${{ secrets.GCP_PROJECT_ID }} \
           --allow-unauthenticated \
-          --set-env-vars PORT=8080 \
-          --port 8080 \
           --timeout 300 \
           --memory 1Gi \
           --cpu 1 \
-          --set-env-vars DJANGO_SETTINGS_MODULE=your_project.settings \
-          --set-secrets DATABASE_URL=your-database-secret:latest
+          --set-env-vars DJANGO_SETTINGS_MODULE=your_project.settings,DATABASE_URL=your-database-secret
 
     - name: Deploy Postgres to Cloud Run
       run: |
@@ -76,8 +73,6 @@ jobs:
           --platform managed \
           --region ${{ env.GCP_REGION }} \
           --project ${{ secrets.GCP_PROJECT_ID }} \
-          --set-env-vars PORT=5432 \
-          --port 5432 \
           --timeout 300 \
           --memory 1Gi \
           --cpu 1
