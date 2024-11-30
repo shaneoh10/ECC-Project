@@ -26,7 +26,7 @@ jobs:
     uses: ./.github/workflows/terraform_gcp_apply.yml
     secrets: inherit
 
-  cgp_deploy:
+  gcp_deploy:
     name: GCP Deploy
     needs: terraform_apply
     uses: ./.github/workflows/gcp_deploy.yml
@@ -34,7 +34,7 @@ jobs:
 
   terraform_destroy:
     name: Terraform Destroy
-    needs: terraform_apply
+    needs: gcp_deploy
     if: ${{ always() }}
     uses: ./.github/workflows/terraform_gcp_destroy.yml
     secrets: inherit
