@@ -26,11 +26,11 @@ jobs:
     uses: ./.github/workflows/terraform_gcp_apply.yml
     secrets: inherit
 
-  # aws_deploy:
-  #   name: AWS Deploy
-  #   needs: terraform_apply
-  #   uses: ./.github/workflows/aws_deploy.yml
-  #   secrets: inherit
+  cgp_deploy:
+    name: GCP Deploy
+    needs: terraform_apply
+    uses: ./.github/workflows/gcp_deploy.yml
+    secrets: inherit
 
   terraform_destroy:
     name: Terraform Destroy
