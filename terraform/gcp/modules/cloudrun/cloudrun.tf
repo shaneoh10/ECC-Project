@@ -5,14 +5,19 @@ resource "google_cloud_run_service" "postgres" {
 
   metadata {
     annotations = {
-      "run.googleapis.com/ingress"                   = "internal"
-      "run.googleapis.com/enable-tcp-health-check"   = "true"
-      "run.googleapis.com/vpc-access-connector"      = google_vpc_access_connector.connector.name
-      "run.googleapis.com/vpc-access-egress"         = "all-traffic"
+      "run.googleapis.com/ingress"                 = "internal"
+      "run.googleapis.com/enable-tcp-health-check" = "true"
     }
   }
 
   template {
+    metadata {
+      annotations = {
+        "run.googleapis.com/vpc-access-connector" = google_vpc_access_connector.connector.name
+        "run.googleapis.com/vpc-access-egress"    = "all-traffic"
+      }
+    }
+
     spec {
       containers {
         image = "postgres:16"
@@ -48,14 +53,19 @@ resource "google_cloud_run_service" "django" {
 
   metadata {
     annotations = {
-      "run.googleapis.com/ingress"                   = "internal"
-      "run.googleapis.com/enable-tcp-health-check"   = "true"
-      "run.googleapis.com/vpc-access-connector"      = google_vpc_access_connector.connector.name
-      "run.googleapis.com/vpc-access-egress"         = "all-traffic"
+      "run.googleapis.com/ingress"                 = "internal"
+      "run.googleapis.com/enable-tcp-health-check" = "true"
     }
   }
 
   template {
+    metadata {
+      annotations = {
+        "run.googleapis.com/vpc-access-connector" = google_vpc_access_connector.connector.name
+        "run.googleapis.com/vpc-access-egress"    = "all-traffic"
+      }
+    }
+
     spec {
       containers {
         image = "gcr.io/google-samples/hello-app:1.0"
