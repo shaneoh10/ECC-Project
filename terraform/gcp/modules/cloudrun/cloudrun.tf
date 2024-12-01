@@ -8,7 +8,7 @@ resource "google_cloud_run_service" "postgres" {
       containers {
         image = "postgres:16"
         ports {
-          container_port = var.db_port
+          container_port = 8080
         }
         env {
           name  = "POSTGRES_USER"
@@ -21,6 +21,10 @@ resource "google_cloud_run_service" "postgres" {
         env {
           name  = "POSTGRES_DB"
           value = var.postgres_db
+        }
+        env {
+          name  = "POSTGRES_PORT"
+          value = tostring(var.db_port)
         }
       }
     }
@@ -49,7 +53,7 @@ resource "google_cloud_run_service" "django" {
       containers {
         image = "gcr.io/google-samples/hello-app:1.0"
         ports {
-          container_port = var.app_port
+          container_port = 8080
         }
 
         env {
