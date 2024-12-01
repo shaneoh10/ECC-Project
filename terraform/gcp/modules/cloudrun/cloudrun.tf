@@ -5,8 +5,10 @@ resource "google_cloud_run_service" "postgres" {
 
   metadata {
     annotations = {
-      "run.googleapis.com/ingress"                 = "internal"
-      "run.googleapis.com/enable-tcp-health-check" = "true"
+      "run.googleapis.com/ingress"                   = "internal"
+      "run.googleapis.com/enable-tcp-health-check"   = "true"
+      "run.googleapis.com/vpc-access-connector"      = google_vpc_access_connector.connector.name
+      "run.googleapis.com/vpc-access-egress"         = "all-traffic"
     }
   }
 
@@ -46,11 +48,10 @@ resource "google_cloud_run_service" "django" {
 
   metadata {
     annotations = {
-      # "autoscaling.knative.dev/maxScale"        = "1"
-      # "run.googleapis.com/vpc-access-connector" = google_vpc_access_connector.connector.id
-      # "run.googleapis.com/vpc-access-egress"    = "private-ranges-only"
-      "run.googleapis.com/ingress"                 = "internal"
-      "run.googleapis.com/enable-tcp-health-check" = "true"
+      "run.googleapis.com/ingress"                   = "internal"
+      "run.googleapis.com/enable-tcp-health-check"   = "true"
+      "run.googleapis.com/vpc-access-connector"      = google_vpc_access_connector.connector.name
+      "run.googleapis.com/vpc-access-egress"         = "all-traffic"
     }
   }
 
@@ -77,7 +78,7 @@ resource "google_cloud_run_service" "django" {
         }
         env {
           name  = "POSTGRES_HOST"
-          value = var.postgres_host
+          value = "${google_cloud_run_service.postgres.name}.${var.region}.r.run.app"
         }
         env {
           name  = "POSTGRES_PORT"
@@ -96,7 +97,7 @@ resource "google_cloud_run_service" "django" {
           http_get {
             path = "/"
           }
-          initial_delay_seconds = 60
+          initial_delay_seconds = 120
           period_seconds        = 30
           failure_threshold     = 3
         }
@@ -112,13 +113,21 @@ resource "google_cloud_run_service" "django" {
 
 # VPC Access Connector for Cloud Run
 resource "google_vpc_access_connector" "connector" {
-  name          = "${var.project_id}"
+  name          = "${var.project_id}-connector"
   region        = var.region
   network       = var.vpc_id
   ip_cidr_range = "10.8.0.0/28"
 }
 
-# Load Balancer (using Google Cloud Load Balancing)
+# IAM permissions to allow Django to invoke PostgreSQL
+resource "google_cloud_run_service_iam_binding" "postgres_invoker" {
+  service  = google_cloud_run_service.postgres.name
+  location = google_cloud_run_service.postgres.location
+  members  = ["serviceAccount:${google_cloud_run_service.django.template.spec.service_account}"]
+  role     = "roles/run.invoker"
+}
+
+# Load Balancer and other configurations remain unchanged
 resource "google_compute_global_address" "lb_ip" {
   name = "${var.project_id}-lb-ip"
 }
