@@ -113,7 +113,7 @@ resource "google_cloud_run_service" "django" {
 
 # VPC Access Connector for Cloud Run
 resource "google_vpc_access_connector" "connector" {
-  name          = "${var.project_id}-connector"
+  name          = "ecc-project-connector"
   region        = var.region
   network       = var.vpc_id
   ip_cidr_range = "10.8.0.0/28"
