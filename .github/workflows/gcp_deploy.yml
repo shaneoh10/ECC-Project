@@ -75,4 +75,4 @@ jobs:
           --timeout 300 \
           --memory 1Gi \
           --cpu 1 \
-          --set-env-vars DJANGO_SETTINGS_MODULE=your_project.settings,DATABASE_URL=your-database-secret
+          --set-env-vars DJANGO_SETTINGS_MODULE=config.settings.local
