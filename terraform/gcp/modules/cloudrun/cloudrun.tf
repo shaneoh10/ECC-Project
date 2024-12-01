@@ -1,11 +1,11 @@
 # Cloud Run Service for PostgreSQL
 resource "google_cloud_run_service" "postgres" {
-  name     = "${var.project_id}-postgres"
+  name     = "ecc-project-postgres"
   location = var.region
 
   metadata {
     annotations = {
-      "run.googleapis.com/ingress"               = "internal" # Optional: restrict to internal traffic
+      "run.googleapis.com/ingress"                 = "internal"
       "run.googleapis.com/enable-tcp-health-check" = "true"
     }
   }
@@ -41,14 +41,16 @@ resource "google_cloud_run_service" "postgres" {
 
 # Cloud Run Service for Django
 resource "google_cloud_run_service" "django" {
-  name     = "${var.project_id}-django"
+  name     = "ecc-project-django"
   location = var.region
 
   metadata {
     annotations = {
-      "autoscaling.knative.dev/maxScale"        = "1"
-      "run.googleapis.com/vpc-access-connector" = google_vpc_access_connector.connector.id
-      "run.googleapis.com/vpc-access-egress"    = "private-ranges-only"
+      # "autoscaling.knative.dev/maxScale"        = "1"
+      # "run.googleapis.com/vpc-access-connector" = google_vpc_access_connector.connector.id
+      # "run.googleapis.com/vpc-access-egress"    = "private-ranges-only"
+      "run.googleapis.com/ingress"                 = "internal"
+      "run.googleapis.com/enable-tcp-health-check" = "true"
     }
   }
 
