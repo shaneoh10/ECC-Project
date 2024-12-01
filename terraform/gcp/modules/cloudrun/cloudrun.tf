@@ -8,7 +8,7 @@ resource "google_cloud_run_service" "postgres" {
       containers {
         image = "postgres:16"
         ports {
-          container_port = tostring(var.db_port)
+          container_port = 5432
         }
         env {
           name  = "POSTGRES_USER"
@@ -22,13 +22,18 @@ resource "google_cloud_run_service" "postgres" {
           name  = "POSTGRES_DB"
           value = var.postgres_db
         }
+
+        env {
+          name  = "POSTGRES_PORT"
+          value = "5432"
+        }
       }
     }
 
     metadata {
       annotations = {
-        "autoscaling.knative.dev/maxScale" = "1"
-        "run.googleapis.com/vpc-access-connector" = google_vpc_access_connector.connector.id
+        "run.googleapis.com/ingress" = "internal" # Optional: restrict to internal traffic
+        "run.googleapis.com/enable-tcp-health-check" = "true"
       }
     }
   }
@@ -79,6 +84,11 @@ resource "google_cloud_run_service" "django" {
         env {
           name  = "IPYTHONDIR"
           value = "/app/.ipython"
+        }
+
+        env {
+          name  = "PORT"
+          value = tostring(var.app_port)
         }
 
         startup_probe {
