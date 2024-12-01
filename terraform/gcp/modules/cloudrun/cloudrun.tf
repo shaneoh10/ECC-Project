@@ -103,14 +103,14 @@ resource "google_cloud_run_service" "django" {
           value = "/app/.ipython"
         }
 
-        startup_probe {
-          http_get {
-            path = "/"
-          }
-          initial_delay_seconds = 120
-          period_seconds        = 30
-          failure_threshold     = 3
-        }
+        # startup_probe {
+        #   http_get {
+        #     path = "/"
+        #   }
+        #   initial_delay_seconds = 120
+        #   period_seconds        = 30
+        #   failure_threshold     = 3
+        # }
       }
     }
   }
