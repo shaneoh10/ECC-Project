@@ -3,6 +3,13 @@ resource "google_cloud_run_service" "postgres" {
   name     = "${var.project_id}-postgres"
   location = var.region
 
+  metadata {
+    annotations = {
+      "run.googleapis.com/ingress"               = "internal" # Optional: restrict to internal traffic
+      "run.googleapis.com/enable-tcp-health-check" = "true"
+    }
+  }
+
   template {
     spec {
       containers {
@@ -22,18 +29,6 @@ resource "google_cloud_run_service" "postgres" {
           name  = "POSTGRES_DB"
           value = var.postgres_db
         }
-
-        env {
-          name  = "POSTGRES_PORT"
-          value = "5432"
-        }
-      }
-    }
-
-    metadata {
-      annotations = {
-        "run.googleapis.com/ingress" = "internal" # Optional: restrict to internal traffic
-        "run.googleapis.com/enable-tcp-health-check" = "true"
       }
     }
   }
@@ -49,12 +44,21 @@ resource "google_cloud_run_service" "django" {
   name     = "${var.project_id}-django"
   location = var.region
 
+  metadata {
+    annotations = {
+      "autoscaling.knative.dev/maxScale"          = "1"
+      "run.googleapis.com/vpc-access-connector"   = google_vpc_access_connector.connector.id
+      "run.googleapis.com/vpc-access-egress"      = "private-ranges-only"
+    }
+  }
+
   template {
     spec {
       containers {
         image = "gcr.io/google-samples/hello-app:1.0"
+
         ports {
-          container_port = tostring(var.db_port)
+          container_port = 8000
         }
 
         env {
@@ -86,11 +90,6 @@ resource "google_cloud_run_service" "django" {
           value = "/app/.ipython"
         }
 
-        env {
-          name  = "PORT"
-          value = tostring(var.app_port)
-        }
-
         startup_probe {
           http_get {
             path = "/"
@@ -99,14 +98,6 @@ resource "google_cloud_run_service" "django" {
           period_seconds        = 30
           failure_threshold     = 3
         }
-      }
-    }
-
-    metadata {
-      annotations = {
-        "autoscaling.knative.dev/maxScale"          = "1"
-        "run.googleapis.com/vpc-access-connector"   = google_vpc_access_connector.connector.id
-        "run.googleapis.com/vpc-access-egress"      = "private-ranges-only"
       }
     }
   }
