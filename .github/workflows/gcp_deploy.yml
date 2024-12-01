@@ -63,7 +63,7 @@ jobs:
           --timeout 300 \
           --memory 1Gi \
           --cpu 1 \
-          --set-env-vars PORT=5432
+          --set-env-vars
 
     - name: Deploy Django app to Cloud Run
       run: |
@@ -76,4 +76,4 @@ jobs:
           --timeout 300 \
           --memory 1Gi \
           --cpu 1 \
-          --set-env-vars DJANGO_SETTINGS_MODULE=config.settings.local, PORT=8000
+          --set-env-vars DJANGO_SETTINGS_MODULE=config.settings.local
