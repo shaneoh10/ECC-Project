@@ -46,9 +46,9 @@ resource "google_cloud_run_service" "django" {
 
   metadata {
     annotations = {
-      "autoscaling.knative.dev/maxScale"          = "1"
-      "run.googleapis.com/vpc-access-connector"   = google_vpc_access_connector.connector.id
-      "run.googleapis.com/vpc-access-egress"      = "private-ranges-only"
+      "autoscaling.knative.dev/maxScale"        = "1"
+      "run.googleapis.com/vpc-access-connector" = google_vpc_access_connector.connector.id
+      "run.googleapis.com/vpc-access-egress"    = "private-ranges-only"
     }
   }
 
