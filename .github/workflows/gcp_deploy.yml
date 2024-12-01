@@ -63,7 +63,6 @@ jobs:
           --timeout 300 \
           --memory 1Gi \
           --cpu 1 \
-          --set-env-vars
 
     - name: Deploy Django app to Cloud Run
       run: |
