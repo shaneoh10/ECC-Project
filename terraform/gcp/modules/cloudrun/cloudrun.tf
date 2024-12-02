@@ -1,4 +1,3 @@
-# Cloud Run Service for PostgreSQL
 resource "google_cloud_run_service" "postgres" {
   name     = "ecc-project-postgres"
   location = var.region
@@ -38,11 +37,16 @@ resource "google_cloud_run_service" "postgres" {
         }
         env {
           name  = "POSTGRES_HOST_AUTH_METHOD"
-          value = "trust"
+          value = "md5"
         }
-        env {
-          name  = "POSTGRES_INITDB_ARGS"
-          value = "--listen-addresses='*'"
+
+        startup_probe {
+          tcp_socket {
+            port = 5432
+          }
+          initial_delay_seconds = 30
+          period_seconds        = 10
+          failure_threshold     = 3
         }
       }
     }
