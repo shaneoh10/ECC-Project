@@ -5,7 +5,7 @@ resource "google_cloud_run_service" "postgres" {
   metadata {
     annotations = {
       "run.googleapis.com/ingress"                 = "internal"
-      # "run.googleapis.com/enable-tcp-health-check" = "true"
+      "run.googleapis.com/enable-tcp-health-check" = "true"
     }
   }
 
@@ -39,15 +39,6 @@ resource "google_cloud_run_service" "postgres" {
           name  = "POSTGRES_HOST_AUTH_METHOD"
           value = "md5"
         }
-
-        # startup_probe {
-        #   tcp_socket {
-        #     port = 5432
-        #   }
-        #   initial_delay_seconds = 30
-        #   period_seconds        = 10
-        #   failure_threshold     = 3
-        # }
       }
     }
   }
