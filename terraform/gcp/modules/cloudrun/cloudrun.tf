@@ -40,6 +40,10 @@ resource "google_cloud_run_service" "postgres" {
           name  = "POSTGRES_HOST_AUTH_METHOD"
           value = "trust"
         }
+        env {
+          name  = "POSTGRES_INITDB_ARGS"
+          value = "--listen-addresses='*'"
+        }
       }
     }
   }
@@ -58,7 +62,7 @@ resource "google_cloud_run_service" "django" {
   metadata {
     annotations = {
       "run.googleapis.com/ingress"                 = "internal"
-      # "run.googleapis.com/enable-tcp-health-check" = "true"
+      "run.googleapis.com/enable-tcp-health-check" = "true"
     }
   }
 
