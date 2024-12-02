@@ -11,7 +11,6 @@ resource "google_compute_subnetwork" "sn1" {
   ip_cidr_range = "10.0.1.0/24"
   region        = var.region
   network       = google_compute_network.vpc.id
-
   private_ip_google_access = true
 }
 
@@ -20,7 +19,6 @@ resource "google_compute_subnetwork" "sn2" {
   ip_cidr_range = "10.0.2.0/24"
   region        = var.region
   network       = google_compute_network.vpc.id
-
   private_ip_google_access = true
 }
 
@@ -30,7 +28,6 @@ resource "google_compute_subnetwork" "private_sn1" {
   ip_cidr_range = "10.0.3.0/24"
   region        = var.region
   network       = google_compute_network.vpc.id
-
   private_ip_google_access = true
 }
 
@@ -39,7 +36,6 @@ resource "google_compute_subnetwork" "private_sn2" {
   ip_cidr_range = "10.0.4.0/24"
   region        = var.region
   network       = google_compute_network.vpc.id
-
   private_ip_google_access = true
 }
 
@@ -70,4 +66,16 @@ resource "google_compute_firewall" "alb_fw" {
   }
 
   source_ranges = ["0.0.0.0/0"]
+}
+
+resource "google_compute_firewall" "postgres_fw" {
+  name    = "${var.project_id}-postgres-fw"
+  network = google_compute_network.vpc.id
+
+  allow {
+    protocol = "tcp"
+    ports    = ["5432"]
+  }
+
+  source_ranges = ["10.0.0.0/8"]
 }
