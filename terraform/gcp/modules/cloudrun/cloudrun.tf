@@ -107,9 +107,9 @@ resource "google_cloud_run_service" "django" {
           http_get {
             path = "/"
           }
-          initial_delay_seconds = 180
+          initial_delay_seconds = 120
           period_seconds        = 30
-          failure_threshold     = 5
+          failure_threshold     = 3
         }
       }
     }
