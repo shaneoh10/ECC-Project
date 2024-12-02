@@ -133,7 +133,7 @@ resource "google_vpc_access_connector" "connector" {
 resource "google_cloud_run_service_iam_binding" "postgres_invoker" {
   service  = google_cloud_run_service.postgres.name
   location = google_cloud_run_service.postgres.location
-  members  = ["allAuthenticatedUsers"]
+  members  = ["allUsers"]
   role     = "roles/run.invoker"
 }
 
