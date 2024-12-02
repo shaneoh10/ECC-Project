@@ -36,6 +36,10 @@ resource "google_cloud_run_service" "postgres" {
           name  = "POSTGRES_DB"
           value = var.postgres_db
         }
+        env {
+          name  = "POSTGRES_HOST_AUTH_METHOD"
+          value = "trust"
+        }
       }
     }
   }
