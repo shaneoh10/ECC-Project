@@ -70,3 +70,4 @@ resource "google_compute_firewall" "alb_fw" {
   }
 
   source_ranges = ["0.0.0.0/0"]
+}
