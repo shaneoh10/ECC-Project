@@ -40,14 +40,14 @@ resource "google_cloud_run_service" "postgres" {
           value = "md5"
         }
 
-        # startup_probe {
-        #   tcp_socket {
-        #     port = 5432
-        #   }
-        #   initial_delay_seconds = 30
-        #   period_seconds        = 10
-        #   failure_threshold     = 3
-        # }
+        startup_probe {
+          tcp_socket {
+            port = 5432
+          }
+          initial_delay_seconds = 30
+          period_seconds        = 10
+          failure_threshold     = 3
+        }
       }
     }
   }
@@ -115,14 +115,14 @@ resource "google_cloud_run_service" "django" {
           value = "/app/.ipython"
         }
 
-        # startup_probe {
-        #   http_get {
-        #     path = "/"
-        #   }
-        #   initial_delay_seconds = 120
-        #   period_seconds        = 30
-        #   failure_threshold     = 3
-        # }
+        startup_probe {
+          http_get {
+            path = "/"
+          }
+          initial_delay_seconds = 120
+          period_seconds        = 30
+          failure_threshold     = 3
+        }
       }
     }
   }

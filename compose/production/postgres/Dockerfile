@@ -9,4 +9,4 @@ RUN mv /usr/local/bin/maintenance/* /usr/local/bin \
     && rmdir /usr/local/bin/maintenance
 
 # Use custom config file on startup
-CMD ["postgres", "-c", "config_file=/compose/postgres/postgresql.conf"]
+CMD ["postgres", "-c", "config_file=/etc/postgres/postgresql.conf"]
