@@ -4,7 +4,7 @@ resource "google_cloud_run_service" "postgres" {
 
   metadata {
     annotations = {
-      "run.googleapis.com/ingress"                 = "internal"
+      "run.googleapis.com/ingress"                 = "all"
       "run.googleapis.com/enable-tcp-health-check" = "true"
     }
   }
@@ -57,7 +57,7 @@ resource "google_cloud_run_service" "django" {
   metadata {
     annotations = {
       "run.googleapis.com/ingress"                 = "internal"
-      # "run.googleapis.com/enable-tcp-health-check" = "true"
+      "run.googleapis.com/enable-tcp-health-check" = "true"
     }
   }
 
@@ -105,15 +105,6 @@ resource "google_cloud_run_service" "django" {
           name  = "IPYTHONDIR"
           value = "/app/.ipython"
         }
-
-        # startup_probe {
-        #   http_get {
-        #     path = "/"
-        #   }
-        #   initial_delay_seconds = 120
-        #   period_seconds        = 30
-        #   failure_threshold     = 3
-        # }
       }
     }
   }
