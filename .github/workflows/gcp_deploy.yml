@@ -63,7 +63,7 @@ jobs:
           --timeout 300 \
           --memory 1Gi \
           --cpu 1 \
-          --set-env-vars POSTGRES_USER=${{ secrets.POSTGRES_USER }},POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }},POSTGRES_DB=${{ secrets.POSTGRES_DB }}, POSTGRES_TRUST_AUTH_METHOD=trust
+          --set-env-vars POSTGRES_TRUST_AUTH_METHOD=trust,POSTGRES_USER=${{ secrets.POSTGRES_USER }},POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }},POSTGRES_DB=${{ secrets.POSTGRES_DB }}
 
     - name: Deploy Django app to Cloud Run
       run: |
