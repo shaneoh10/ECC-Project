@@ -26,11 +26,13 @@ resource "google_cloud_run_service" "postgres" {
         }
         env {
           name  = "POSTGRES_USER"
-          value = var.postgres_user
+          # value = var.postgres_user
+          value = "MJqVvAyWWVYAqSEdevWlSiwLbLIAjkKA"
         }
         env {
           name  = "POSTGRES_PASSWORD"
-          value = var.postgres_password
+          # value = var.postgres_password
+          value = "3ZoSNXGdkg5NQZf4VNKh2Qj43iPOlUqfj2tJfHTbId4rM3YkU2ejU2Ata60bNF0U"
         }
         env {
           name  = "POSTGRES_DB"
@@ -76,11 +78,13 @@ resource "google_cloud_run_service" "django" {
 
         env {
           name  = "POSTGRES_USER"
-          value = var.postgres_user
+          # value = var.postgres_user
+          value = "MJqVvAyWWVYAqSEdevWlSiwLbLIAjkKA"
         }
         env {
           name  = "POSTGRES_PASSWORD"
-          value = var.postgres_password
+          # value = var.postgres_password
+          value = "3ZoSNXGdkg5NQZf4VNKh2Qj43iPOlUqfj2tJfHTbId4rM3YkU2ejU2Ata60bNF0U"
         }
         env {
           name  = "POSTGRES_DB"
