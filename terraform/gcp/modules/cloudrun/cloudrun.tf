@@ -5,7 +5,7 @@ resource "google_cloud_run_service" "postgres" {
   metadata {
     annotations = {
       "run.googleapis.com/ingress"                 = "internal"
-      "run.googleapis.com/enable-tcp-health-check" = "true"
+      # "run.googleapis.com/enable-tcp-health-check" = "true"
     }
   }
 
@@ -66,7 +66,7 @@ resource "google_cloud_run_service" "django" {
   metadata {
     annotations = {
       "run.googleapis.com/ingress"                 = "internal"
-      "run.googleapis.com/enable-tcp-health-check" = "true"
+      # "run.googleapis.com/enable-tcp-health-check" = "true"
     }
   }
 
