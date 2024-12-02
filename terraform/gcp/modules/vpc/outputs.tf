@@ -28,16 +28,6 @@ output "alb_firewall_rule_id" {
   value       = google_compute_firewall.alb_fw.id
 }
 
-output "app_firewall_rule_id" {
-  description = "The ID of the application firewall rule"
-  value       = google_compute_firewall.app_fw.id
-}
-
-output "db_firewall_rule_id" {
-  description = "The ID of the database firewall rule"
-  value       = google_compute_firewall.db_fw.id
-}
-
 output "cloud_router_id" {
   description = "The ID of the Cloud Router"
   value       = google_compute_router.router.id
