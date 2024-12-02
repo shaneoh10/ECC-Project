@@ -63,6 +63,7 @@ jobs:
           --timeout 300 \
           --memory 1Gi \
           --cpu 1 \
+          --set-env-vars POSTGRES_USER=${{ secrets.POSTGRES_USER }},POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }},POSTGRES_DB=${{ secrets.POSTGRES_DB }}
 
     - name: Deploy Django app to Cloud Run
       run: |
@@ -75,4 +76,4 @@ jobs:
           --timeout 300 \
           --memory 1Gi \
           --cpu 1 \
-          --set-env-vars DJANGO_SETTINGS_MODULE=config.settings.local
+          --set-env-vars DJANGO_SETTINGS_MODULE=config.settings.local,POSTGRES_USER=${{ secrets.POSTGRES_USER }},POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }},POSTGRES_DB=${{ secrets.POSTGRES_DB }},POSTGRES_HOST=${{ env.CLOUD_RUN_SERVICE_DB }}.${{ env.GCP_REGION }}.r.run.app,POSTGRES_PORT=5432,USE_DOCKER=yes,IPYTHONDIR=/app/.ipython
