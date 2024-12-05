@@ -1,4 +1,4 @@
-name: "Terraform Destroy AWS"
+name: "Terraform Destroy Google Cloud Platform"
 
 on:
   workflow_call:
@@ -11,23 +11,27 @@ env:
 
 jobs:
   terraform:
-    name: "Terraform Destroy"
+    name: Terraform Destroy
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: terraform
+        working-directory: terraform/gcp
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Configure GCP Credentials
+        uses: google-github-actions/auth@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          credentials_json: "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}"
 
-      - name: Setup Terraform
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: ">= 502.0.0"
+          project_id: "${{ secrets.GCP_PROJECT_ID }}"
+
+      - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.7
@@ -35,19 +39,19 @@ jobs:
 
       - name: Terraform Format
         id: fmt
-        working-directory: terraform/aws
+        working-directory: terraform/gcp
         run: terraform fmt -check
 
       - name: Terraform Init
         id: init
-        working-directory: terraform/aws
+        working-directory: terraform/gcp
         run: terraform init
 
       - name: Terraform Plan Destroy
         id: plan
-        working-directory: terraform/aws
+        working-directory: terraform/gcp
         run: terraform plan -destroy -no-color
 
       - name: Terraform Destroy
-        working-directory: terraform/aws
+        working-directory: terraform/gcp
         run: terraform destroy -auto-approve

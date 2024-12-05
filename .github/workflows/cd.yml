@@ -1,8 +1,13 @@
 name: Continuous Deployment
 
+# on:
+#   push:
+#     branches: ["master", "main"]
+
 on:
-  # push:
-  #   branches: ['master', 'main']
+  pull_request:
+    branches: ['master', 'main']
+    paths-ignore: ['docs/**']
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
@@ -18,18 +23,18 @@ env:
 jobs:
   terraform_apply:
     name: Terraform Apply
-    uses: ./.github/workflows/terraform_aws_apply.yml
+    uses: ./.github/workflows/terraform_gcp_apply.yml
     secrets: inherit
 
-  aws_deploy:
-    name: AWS Deploy
+  gcp_deploy:
+    name: GCP Deploy
     needs: terraform_apply
-    uses: ./.github/workflows/aws_deploy.yml
+    uses: ./.github/workflows/gcp_deploy.yml
     secrets: inherit
 
   terraform_destroy:
     name: Terraform Destroy
-    needs: aws_deploy
+    needs: gcp_deploy
     if: ${{ always() }}
-    uses: ./.github/workflows/terraform_aws_destroy.yml
+    uses: ./.github/workflows/terraform_gcp_destroy.yml
     secrets: inherit

@@ -1,14 +1,27 @@
-# Cloud Run Service for PostgreSQL
 resource "google_cloud_run_service" "postgres" {
-  name     = "${var.project_id}-postgres"
+  name     = "ecc-project-postgres"
   location = var.region
 
+  metadata {
+    annotations = {
+      "run.googleapis.com/ingress"                 = "all"
+      "run.googleapis.com/enable-tcp-health-check" = "true"
+    }
+  }
+
   template {
+    metadata {
+      annotations = {
+        "run.googleapis.com/vpc-access-connector" = google_vpc_access_connector.connector.name
+        "run.googleapis.com/vpc-access-egress"    = "all-traffic"
+      }
+    }
+
     spec {
       containers {
         image = "postgres:16"
         ports {
-          container_port = var.db_port
+          container_port = 5432
         }
         env {
           name  = "POSTGRES_USER"
@@ -22,13 +35,10 @@ resource "google_cloud_run_service" "postgres" {
           name  = "POSTGRES_DB"
           value = var.postgres_db
         }
-      }
-    }
-
-    metadata {
-      annotations = {
-        "autoscaling.knative.dev/maxScale" = "1"
-        "run.googleapis.com/vpc-access-connector" = google_vpc_access_connector.connector.id
+        env {
+          name  = "POSTGRES_HOST_AUTH_METHOD"
+          value = "md5"
+        }
       }
     }
   }
@@ -41,15 +51,30 @@ resource "google_cloud_run_service" "postgres" {
 
 # Cloud Run Service for Django
 resource "google_cloud_run_service" "django" {
-  name     = "${var.project_id}-django"
+  name     = "ecc-project-django"
   location = var.region
 
+  metadata {
+    annotations = {
+      "run.googleapis.com/ingress"                 = "internal"
+      "run.googleapis.com/enable-tcp-health-check" = "true"
+    }
+  }
+
   template {
+    metadata {
+      annotations = {
+        "run.googleapis.com/vpc-access-connector" = google_vpc_access_connector.connector.name
+        "run.googleapis.com/vpc-access-egress"    = "all-traffic"
+      }
+    }
+
     spec {
       containers {
         image = "gcr.io/google-samples/hello-app:1.0"
+
         ports {
-          container_port = var.app_port
+          container_port = 8080
         }
 
         env {
@@ -80,23 +105,6 @@ resource "google_cloud_run_service" "django" {
           name  = "IPYTHONDIR"
           value = "/app/.ipython"
         }
-
-        startup_probe {
-          http_get {
-            path = "/"
-          }
-          initial_delay_seconds = 60
-          period_seconds        = 30
-          failure_threshold     = 3
-        }
-      }
-    }
-
-    metadata {
-      annotations = {
-        "autoscaling.knative.dev/maxScale"          = "1"
-        "run.googleapis.com/vpc-access-connector"   = google_vpc_access_connector.connector.id
-        "run.googleapis.com/vpc-access-egress"      = "private-ranges-only"
       }
     }
   }
@@ -109,13 +117,21 @@ resource "google_cloud_run_service" "django" {
 
 # VPC Access Connector for Cloud Run
 resource "google_vpc_access_connector" "connector" {
-  name          = "${var.project_id}"
+  name          = "ecc-project-connector"
   region        = var.region
   network       = var.vpc_id
   ip_cidr_range = "10.8.0.0/28"
 }
 
-# Load Balancer (using Google Cloud Load Balancing)
+# IAM permissions to allow Django to invoke PostgreSQL
+resource "google_cloud_run_service_iam_binding" "postgres_invoker" {
+  service  = google_cloud_run_service.postgres.name
+  location = google_cloud_run_service.postgres.location
+  members  = ["allUsers"]
+  role     = "roles/run.invoker"
+}
+
+# Load Balancer and other configurations remain unchanged
 resource "google_compute_global_address" "lb_ip" {
   name = "${var.project_id}-lb-ip"
 }
