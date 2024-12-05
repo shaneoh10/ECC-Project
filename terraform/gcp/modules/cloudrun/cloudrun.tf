@@ -91,7 +91,7 @@ resource "google_cloud_run_service" "django" {
         }
         env {
           name  = "POSTGRES_HOST"
-          value = "${google_cloud_run_service.postgres.name}-809000347521.${var.region}.run.app"
+          value = var.postgres_host
         }
         env {
           name  = "POSTGRES_PORT"
