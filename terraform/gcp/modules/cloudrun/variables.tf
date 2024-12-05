@@ -11,7 +11,7 @@ variable "region" {
 variable "app_port" {
   description = "Port the application runs on"
   type        = number
-  default     = 8000
+  default     = 8080
 }
 
 variable "db_port" {

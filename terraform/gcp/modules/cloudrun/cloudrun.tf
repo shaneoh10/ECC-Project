@@ -74,7 +74,7 @@ resource "google_cloud_run_service" "django" {
         image = "gcr.io/google-samples/hello-app:1.0"
 
         ports {
-          container_port = 8000
+          container_port = 8080
         }
 
         env {
