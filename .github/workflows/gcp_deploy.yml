@@ -54,7 +54,7 @@ jobs:
 
       - name: Deploy Postgres
         run: |
-          gcloud compute ssh ${{ env.VM_NAME_DB }} --zone=${{ env.GCP_REGION }}-a -- \
+          gcloud compute ssh ${{ env.VM_NAME_DB }} --zone=${{ env.GCP_REGION }}-b -- \
             'sudo docker pull ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_PROJECT_ID }}-postgres/${{ env.CONTAINER_NAME_DB }}:${{ env.IMAGE_TAG }} && \
              sudo docker stop postgres || true && \
              sudo docker rm postgres || true && \
@@ -69,7 +69,7 @@ jobs:
 
       - name: Deploy Django
         run: |
-          gcloud compute ssh ${{ env.VM_NAME_APP }} --zone=${{ env.GCP_REGION }}-a -- \
+          gcloud compute ssh ${{ env.VM_NAME_APP }} --zone=${{ env.GCP_REGION }}-b -- \
             'sudo docker pull ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_PROJECT_ID }}-django/${{ env.CONTAINER_NAME_APP }}:${{ env.IMAGE_TAG }} && \
              sudo docker stop django || true && \
              sudo docker rm django || true && \
