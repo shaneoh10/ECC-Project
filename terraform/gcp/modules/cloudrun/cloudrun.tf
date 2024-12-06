@@ -33,7 +33,7 @@ resource "google_compute_instance" "postgres" {
   EOF
 
   service_account {
-    email  = "809000347521-compute@developer.gserviceaccount.com"
+    email  = "ecc-project@ecc-project-443018.iam.gserviceaccount.com"
     scopes = ["cloud-platform"]
   }
 
@@ -78,7 +78,7 @@ resource "google_compute_instance" "django" {
   EOF
 
   service_account {
-    email  = "809000347521-compute@developer.gserviceaccount.com"
+    email  = "8ecc-project@ecc-project-443018.iam.gserviceaccount.com"
     scopes = ["cloud-platform"]
   }
 
