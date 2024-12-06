@@ -1,4 +1,5 @@
 name: GCP Deploy
+
 on:
   workflow_call:
 
@@ -55,9 +56,11 @@ jobs:
       - name: Deploy Postgres
         run: |
           gcloud compute ssh ${{ env.VM_NAME_DB }} --zone=${{ env.GCP_REGION }}-b -- \
-            'sudo docker pull ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_PROJECT_ID }}-postgres/${{ env.CONTAINER_NAME_DB }}:${{ env.IMAGE_TAG }} && \
-             sudo docker stop postgres || true && \
-             sudo docker rm postgres || true && \
+            'gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev &&
+             echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" | docker login -u _json_key --password-stdin ${{ env.GCP_REGION }}-docker.pkg.dev &&
+             sudo docker pull ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_PROJECT_ID }}-postgres/${{ env.CONTAINER_NAME_DB }}:${{ env.IMAGE_TAG }} &&
+             sudo docker stop postgres || true &&
+             sudo docker rm -f postgres || true &&
              sudo docker run -d \
                --name postgres \
                -e POSTGRES_USER=${{ secrets.POSTGRES_USER }} \
@@ -70,9 +73,11 @@ jobs:
       - name: Deploy Django
         run: |
           gcloud compute ssh ${{ env.VM_NAME_APP }} --zone=${{ env.GCP_REGION }}-b -- \
-            'sudo docker pull ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_PROJECT_ID }}-django/${{ env.CONTAINER_NAME_APP }}:${{ env.IMAGE_TAG }} && \
-             sudo docker stop django || true && \
-             sudo docker rm django || true && \
+            'gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev &&
+             echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" | docker login -u _json_key --password-stdin ${{ env.GCP_REGION }}-docker.pkg.dev &&
+             sudo docker pull ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_PROJECT_ID }}-django/${{ env.CONTAINER_NAME_APP }}:${{ env.IMAGE_TAG }} &&
+             sudo docker stop django || true &&
+             sudo docker rm -f django || true &&
              sudo docker run -d \
                --name django \
                -e POSTGRES_USER=${{ secrets.POSTGRES_USER }} \
