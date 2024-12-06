@@ -25,8 +25,8 @@ module "vpc" {
   region     = var.region
 }
 
-module "cloudrun" {
-  source = "./modules/cloudrun"
+module "compute" {
+  source = "./modules/compute"
 
   project_id        = var.project_id
   region            = var.region
@@ -35,6 +35,7 @@ module "cloudrun" {
   postgres_user     = var.postgres_user
   postgres_password = var.postgres_password
   vpc_id            = module.vpc.vpc_id
+  subnet_id         = module.vpc.public_subnet_1_id
 }
 
 module "artifact" {

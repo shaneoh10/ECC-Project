@@ -9,6 +9,15 @@ resource "google_artifact_registry_repository" "repo_django" {
   }
 }
 
+resource "google_artifact_registry_repository_iam_binding" "repo_django_public" {
+  repository = google_artifact_registry_repository.repo_django.id
+  role       = "roles/artifactregistry.reader"
+
+  members = [
+    "allUsers"
+  ]
+}
+
 # GCP Artifact Registry for Postgres
 resource "google_artifact_registry_repository" "repo_postgres" {
   repository_id = "${var.project_id}-postgres"
@@ -18,4 +27,13 @@ resource "google_artifact_registry_repository" "repo_postgres" {
   labels = {
     image-tag-mutability = "mutable"
   }
+}
+
+resource "google_artifact_registry_repository_iam_binding" "repo_postgres_public" {
+  repository = google_artifact_registry_repository.repo_postgres.id
+  role       = "roles/artifactregistry.reader"
+
+  members = [
+    "allUsers"
+  ]
 }

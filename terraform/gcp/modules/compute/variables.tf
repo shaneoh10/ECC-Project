@@ -11,7 +11,7 @@ variable "region" {
 variable "app_port" {
   description = "Port the application runs on"
   type        = number
-  default     = 8080
+  default     = 8000
 }
 
 variable "db_port" {
@@ -46,6 +46,12 @@ variable postgres_host {
 
 variable vpc_id {
   description = "VPC ID"
+  type        = string
+  sensitive   = true
+}
+
+variable subnet_id {
+  description = "Subnet ID"
   type        = string
   sensitive   = true
 }
