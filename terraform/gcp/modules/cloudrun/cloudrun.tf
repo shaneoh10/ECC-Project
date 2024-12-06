@@ -177,3 +177,17 @@ resource "google_compute_firewall" "lb_ingress" {
   source_tags = ["lb"]
   target_tags = ["django"]
 }
+
+# Firewall rule to allow SSH access
+resource "google_compute_firewall" "ssh_ingress" {
+  name    = "allow-ssh-ingress"
+  network = var.vpc_id
+
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+
+  source_ranges = ["0.0.0.0/0"]
+  target_tags   = ["postgres", "django"]
+}
