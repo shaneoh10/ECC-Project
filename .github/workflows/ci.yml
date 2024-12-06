@@ -4,10 +4,10 @@ env:
   DOCKER_BUILDKIT: 1
   COMPOSE_DOCKER_CLI_BUILD: 1
 
-# on:
-#   pull_request:
-#     branches: ['master', 'main']
-#     paths-ignore: ['docs/**']
+on:
+  pull_request:
+    branches: ['master', 'main']
+    paths-ignore: ['docs/**']
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}

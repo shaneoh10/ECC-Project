@@ -25,8 +25,8 @@ module "vpc" {
   region     = var.region
 }
 
-module "cloudrun" {
-  source = "./modules/cloudrun"
+module "compute" {
+  source = "./modules/compute"
 
   project_id        = var.project_id
   region            = var.region
