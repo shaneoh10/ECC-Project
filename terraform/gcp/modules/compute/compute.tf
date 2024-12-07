@@ -6,7 +6,7 @@ resource "google_compute_instance" "postgres" {
 
   boot_disk {
     initialize_params {
-      image = "ubuntu-os-cloud/ubuntu-2204-lts"
+      image = "cos-cloud/cos-stable"
     }
   }
 
@@ -15,22 +15,28 @@ resource "google_compute_instance" "postgres" {
     subnetwork = var.subnet_id
   }
 
-  metadata_startup_script = <<-EOF
-    #!/bin/bash
-    sudo apt-get update
-    sudo apt-get install -y docker.io
-    sudo systemctl start docker
-    sudo systemctl enable docker
-
-    sudo docker run -d \
-      --name postgres \
-      -e POSTGRES_USER=${var.postgres_user} \
-      -e POSTGRES_PASSWORD=${var.postgres_password} \
-      -e POSTGRES_DB=${var.postgres_db} \
-      -e POSTGRES_HOST_AUTH_METHOD=md5 \
-      -p 5432:5432 \
-      postgres:16
-  EOF
+  metadata = {
+    "gce-container-declaration" = <<-EOT
+      spec:
+        containers:
+          - name: postgres
+            image: "postgres:16"
+            env:
+              - name: POSTGRES_USER
+                value: "${var.postgres_user}"
+              - name: POSTGRES_PASSWORD
+                value: "${var.postgres_password}"
+              - name: POSTGRES_DB
+                value: "${var.postgres_db}"
+              - name: POSTGRES_HOST_AUTH_METHOD
+                value: "md5"
+            ports:
+              - name: postgres
+                containerPort: 5432
+                hostPort: 5432
+        restartPolicy: Always
+    EOT
+  }
 
   service_account {
     scopes = ["cloud-platform"]
@@ -47,7 +53,7 @@ resource "google_compute_instance" "django" {
 
   boot_disk {
     initialize_params {
-      image = "ubuntu-os-cloud/ubuntu-2204-lts"
+      image = "cos-cloud/cos-stable"
     }
   }
 
@@ -56,25 +62,34 @@ resource "google_compute_instance" "django" {
     subnetwork = var.subnet_id
   }
 
-  metadata_startup_script = <<-EOF
-    #!/bin/bash
-    sudo apt-get update
-    sudo apt-get install -y docker.io
-    sudo systemctl start docker
-    sudo systemctl enable docker
-
-    sudo docker run -d \
-      --name django \
-      -e POSTGRES_USER=${var.postgres_user} \
-      -e POSTGRES_PASSWORD=${var.postgres_password} \
-      -e POSTGRES_DB=${var.postgres_db} \
-      -e POSTGRES_HOST=${google_compute_instance.postgres.network_interface[0].network_ip} \
-      -e POSTGRES_PORT=5432 \
-      -e USE_DOCKER=yes \
-      -e IPYTHONDIR=/app/.ipython \
-      -p 8000:8000 \
-      gcr.io/google-samples/hello-app:1.0
-  EOF
+  metadata = {
+    "gce-container-declaration" = <<-EOT
+      spec:
+        containers:
+          - name: django
+            image: "gcr.io/google-samples/hello-app:1.0"
+            env:
+              - name: POSTGRES_USER
+                value: "${var.postgres_user}"
+              - name: POSTGRES_PASSWORD
+                value: "${var.postgres_password}"
+              - name: POSTGRES_DB
+                value: "${var.postgres_db}"
+              - name: POSTGRES_HOST
+                value: "${google_compute_instance.postgres.network_interface[0].network_ip}"
+              - name: POSTGRES_PORT
+                value: "5432"
+              - name: USE_DOCKER
+                value: "yes"
+              - name: IPYTHONDIR
+                value: "/app/.ipython"
+            ports:
+              - name: django
+                containerPort: 8000
+                hostPort: 8000
+        restartPolicy: Always
+    EOT
+  }
 
   service_account {
     scopes = ["cloud-platform"]
@@ -109,8 +124,6 @@ resource "google_compute_firewall" "django_ingress" {
   source_tags = ["lb"]
   target_tags = ["django"]
 }
-
-# Load Balancer Configuration
 
 # Health Check for Django
 resource "google_compute_health_check" "django_health_check" {
