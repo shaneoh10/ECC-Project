@@ -53,40 +53,60 @@ jobs:
         run: |
           docker push ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_PROJECT_ID }}-postgres/${{ env.CONTAINER_NAME_DB }}:${{ env.IMAGE_TAG }}
 
-      - name: Deploy Postgres
-        run: |
-          gcloud compute ssh ${{ env.VM_NAME_DB }} --zone=${{ env.GCP_REGION }}-b -- \
-            'gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev &&
-             echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" | sudo docker login -u _json_key --password-stdin ${{ env.GCP_REGION }}-docker.pkg.dev &&
-             sudo docker pull ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_PROJECT_ID }}-postgres/${{ env.CONTAINER_NAME_DB }}:${{ env.IMAGE_TAG }} &&
-             sudo docker stop postgres || true &&
-             sudo docker rm -f postgres || true &&
-             sudo docker run -d \
-               --name postgres \
-               -e POSTGRES_USER=${{ secrets.POSTGRES_USER }} \
-               -e POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
-               -e POSTGRES_DB=${{ secrets.POSTGRES_DB }} \
-               -e POSTGRES_HOST_AUTH_METHOD=md5 \
-               -p 5432:5432 \
-               ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_PROJECT_ID }}-postgres/${{ env.CONTAINER_NAME_DB }}:${{ env.IMAGE_TAG }}'
+          - name: Deploy Postgres
+          run: |
+            gcloud compute instances add-metadata ${{ env.VM_NAME_DB }} \
+              --zone=${{ env.GCP_REGION }}-b \
+              --metadata=gce-container-declaration='spec:
+                containers:
+                  - name: postgres
+                    image: "${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_PROJECT_ID }}-postgres/${{ env.CONTAINER_NAME_DB }}:${{ env.IMAGE_TAG }}"
+                    env:
+                      - name: POSTGRES_USER
+                        value: "${{ secrets.POSTGRES_USER }}"
+                      - name: POSTGRES_PASSWORD
+                        value: "${{ secrets.POSTGRES_PASSWORD }}"
+                      - name: POSTGRES_DB
+                        value: "${{ secrets.POSTGRES_DB }}"
+                      - name: POSTGRES_HOST_AUTH_METHOD
+                        value: "md5"
+                    ports:
+                      - name: postgres
+                        containerPort: 5432
+                        hostPort: 5432
+                restartPolicy: Always'
 
       - name: Deploy Django
         run: |
-          gcloud compute ssh ${{ env.VM_NAME_APP }} --zone=${{ env.GCP_REGION }}-b -- \
-            'gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev &&
-             echo "${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}" | sudo docker login -u _json_key --password-stdin ${{ env.GCP_REGION }}-docker.pkg.dev &&
-             sudo docker pull ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_PROJECT_ID }}-django/${{ env.CONTAINER_NAME_APP }}:${{ env.IMAGE_TAG }} &&
-             sudo docker stop django || true &&
-             sudo docker rm -f django || true &&
-             sudo docker run -d \
-               --name django \
-               -e POSTGRES_USER=${{ secrets.POSTGRES_USER }} \
-               -e POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
-               -e POSTGRES_DB=${{ secrets.POSTGRES_DB }} \
-               -e POSTGRES_HOST=$(gcloud compute instances describe ${{ env.VM_NAME_DB }} --zone=${{ env.GCP_REGION }}-a --format="get(networkInterfaces[0].networkIP)") \
-               -e POSTGRES_PORT=5432 \
-               -e USE_DOCKER=yes \
-               -e IPYTHONDIR=/app/.ipython \
-               -e DJANGO_SETTINGS_MODULE=config.settings.local \
-               -p 8080:8080 \
-               ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_PROJECT_ID }}-django/${{ env.CONTAINER_NAME_APP }}:${{ env.IMAGE_TAG }}'
+          postgres_host=$(gcloud compute instances describe ${{ env.VM_NAME_DB }} \
+            --zone=${{ env.GCP_REGION }}-b \
+            --format="get(networkInterfaces[0].networkIP)")
+
+          gcloud compute instances add-metadata ${{ env.VM_NAME_APP }} \
+            --zone=${{ env.GCP_REGION }}-b \
+            --metadata=gce-container-declaration='spec:
+              containers:
+                - name: django
+                  image: "${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_PROJECT_ID }}-django/${{ env.CONTAINER_NAME_APP }}:${{ env.IMAGE_TAG }}"
+                  env:
+                    - name: POSTGRES_USER
+                      value: "${{ secrets.POSTGRES_USER }}"
+                    - name: POSTGRES_PASSWORD
+                      value: "${{ secrets.POSTGRES_PASSWORD }}"
+                    - name: POSTGRES_DB
+                      value: "${{ secrets.POSTGRES_DB }}"
+                    - name: POSTGRES_HOST
+                      value: "'$postgres_host'"
+                    - name: POSTGRES_PORT
+                      value: "5432"
+                    - name: USE_DOCKER
+                      value: "yes"
+                    - name: IPYTHONDIR
+                      value: "/app/.ipython"
+                    - name: DJANGO_SETTINGS_MODULE
+                      value: "config.settings.local"
+                  ports:
+                    - name: django
+                      containerPort: 8080
+                      hostPort: 8080
+              restartPolicy: Always'
