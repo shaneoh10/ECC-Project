@@ -76,6 +76,8 @@ jobs:
                       hostPort: 5432
               restartPolicy: Always'
 
+          gcloud compute instances reset ${{ env.VM_NAME_DB }} --zone=${{ env.GCP_REGION }}-b
+
       - name: Deploy Django
         run: |
           postgres_host=$(gcloud compute instances describe ${{ env.VM_NAME_DB }} \
@@ -110,3 +112,5 @@ jobs:
                       containerPort: 8080
                       hostPort: 8080
               restartPolicy: Always'
+
+          gcloud compute instances reset ${{ env.VM_NAME_APP }} --zone=${{ env.GCP_REGION }}-b
