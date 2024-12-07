@@ -1,8 +1,8 @@
 name: Trigger Jenkins CI
 
-on:
-  # pull_request:
-  #   branches: ['master', 'main']
+# on:
+#   pull_request:
+#     branches: ['master', 'main']
 
 jobs:
   trigger-jenkins:
