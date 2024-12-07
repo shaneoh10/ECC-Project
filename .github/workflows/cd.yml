@@ -1,13 +1,8 @@
 name: Continuous Deployment
 
-# on:
-#   push:
-#     branches: ["master", "main"]
-
 on:
-  pull_request:
-    branches: ['master', 'main']
-    paths-ignore: ['docs/**']
+  push:
+    branches: ["master", "main"]
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
