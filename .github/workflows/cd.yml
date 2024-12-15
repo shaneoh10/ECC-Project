@@ -18,18 +18,18 @@ env:
 jobs:
   terraform_apply:
     name: Terraform Apply
-    uses: ./.github/workflows/terraform_aws_apply.yml
+    uses: ./.github/workflows/terraform_gcp_apply.yml
     secrets: inherit
 
   app_deploy:
     name: App Deploy
     needs: terraform_apply
-    uses: ./.github/workflows/aws_deploy.yml
+    uses: ./.github/workflows/gcp_deploy.yml
     secrets: inherit
 
   terraform_destroy:
     name: Terraform Destroy
     needs: app_deploy
     if: ${{ always() }}
-    uses: ./.github/workflows/terraform_aws_destroy.yml
+    uses: ./.github/workflows/terraform_gcp_destroy.yml
     secrets: inherit

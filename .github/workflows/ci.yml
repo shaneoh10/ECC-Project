@@ -63,31 +63,35 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Configure GCP Credentials
+        uses: 'google-github-actions/auth@v2'
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-      - name: Setup Terraform
+      - name: Set up Google Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
+        with:
+          version: '>= 502.0.0'
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.7
           terraform_wrapper: false
 
       - name: Terraform Format Check
-        working-directory: terraform/aws
+        working-directory: terraform/gcp
         run: |
           terraform fmt -check
 
       - name: Terraform Init
-        working-directory: terraform/aws
+        working-directory: terraform/gcp
         run: |
           terraform init
 
       - name: Terraform Plan
-        working-directory: terraform/aws
+        working-directory: terraform/gcp
         env:
           TF_VAR_postgres_db: ${{ secrets.POSTGRES_DB }}
           TF_VAR_postgres_user: ${{ secrets.POSTGRES_USER }}
@@ -97,7 +101,7 @@ jobs:
           terraform plan -no-color -out=terraform.tfplan
 
       - name: Validate Plan Output
-        working-directory: terraform/aws
+        working-directory: terraform/gcp
         run: |
           if [ ! -f terraform.tfplan ]; then
             echo "Plan file not created, failing the job."
