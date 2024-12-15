@@ -1,4 +1,4 @@
-# PostgreSQL VM
+# Postgres VM
 resource "google_compute_instance" "postgres" {
   name         = "ecc-project-postgres"
   machine_type = "e2-small"
