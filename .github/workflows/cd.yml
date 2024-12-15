@@ -21,15 +21,15 @@ jobs:
     uses: ./.github/workflows/terraform_aws_apply.yml
     secrets: inherit
 
-  gcp_deploy:
-    name: GCP Deploy
+  app_deploy:
+    name: App Deploy
     needs: terraform_apply
     uses: ./.github/workflows/aws_deploy.yml
     secrets: inherit
 
   terraform_destroy:
     name: Terraform Destroy
-    needs: gcp_deploy
+    needs: app_deploy
     if: ${{ always() }}
     uses: ./.github/workflows/terraform_aws_destroy.yml
     secrets: inherit
