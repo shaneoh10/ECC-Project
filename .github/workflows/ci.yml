@@ -59,6 +59,7 @@ jobs:
       run:
         working-directory: terraform
 
+    # Test comment - remove this for demo
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
