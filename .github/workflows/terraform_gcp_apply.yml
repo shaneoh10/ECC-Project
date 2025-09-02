@@ -18,7 +18,7 @@ jobs:
         working-directory: terraform/gcp
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Configure GCP Credentials
         uses: google-github-actions/auth@v2
